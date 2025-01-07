@@ -19,6 +19,8 @@ func reverseBytes(data []byte) []byte {
 	return reversed
 }
 
+// golang implementation of the splitToWords from AnonAadhaar utils
+// https://github.com/anon-aadhaar/anon-aadhaar/blob/e0cbde3d8e4a3969a6e44a2999ec539439e61d58/packages/core/src/utils.ts#L21
 func splitToWords(number, wordsize, numberElement *big.Int) ([]*big.Int, error) {
 	t := new(big.Int).Set(number)
 	words := []*big.Int{}

@@ -118,6 +118,8 @@ func state(d []byte) *big.Int {
 	return big.NewInt(0).SetBytes(reverseBytes(d[119:124]))
 }
 
+// golang implementation of sha256Pad from zk-email helpers
+// https://github.com/zkemail/zk-email-verify/blob/e1084969fbee16317290e4380b3837af74fea616/packages/helpers/src/sha-utils.ts#L88
 func sha256Pad(m []byte, maxShaBytes int) (paddedMessage []byte, messageLen int, err error) {
 	// do not modify the original message
 	message := make([]byte, len(m))
