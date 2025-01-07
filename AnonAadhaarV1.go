@@ -1,0 +1,209 @@
+package gocircuitexternal
+
+import (
+	"encoding/json"
+	"fmt"
+	"math/big"
+	"strconv"
+	"time"
+
+	"github.com/iden3/go-circuits/v2"
+	"github.com/iden3/go-schema-processor/v2/merklize"
+)
+
+type AnonAadhaarV1Inputs struct {
+	QRData *big.Int `json:"qrData"`
+	// Generated on mobile app values
+	IssuanceDate                    time.Time `json:"issuanceDate"`                    // issuanceDate
+	CredentialSubjectID             string    `json:"credentialSubjectID"`             // credentialSubject.id
+	CredentialStatusRevocationNonce int       `json:"credentialStatusRevocationNonce"` // credentialStatus.revocationNonce
+	CredentialStatusID              string    `json:"credentialStatusID"`              // credentialStatus.id
+	// Mobile dynamic values with Firebase config
+	IssuerID      string `json:"issuerID"`      // issuer
+	PubKey        string `json:"pubKey"`        // pubKey
+	NullifierSeed int    `json:"nullifierSeed"` // nullifierSeed
+	SignalHash    int    `json:"signalHash"`    // signalHash
+}
+
+type anonAadhaarV1CircuitInputs struct {
+	QRDataPadded        []string   `json:"qrDataPadded"`
+	QRDataPaddedLength  int        `json:"qrDataPaddedLength"`
+	DelimiterIndices    []int      `json:"delimiterIndices"`
+	Signature           []string   `json:"signature"`
+	PubKey              []string   `json:"pubKey"`
+	NullifierSeed       int        `json:"nullifierSeed"`
+	SignalHash          int        `json:"signalHash"`
+	RevocationNonce     int        `json:"revocationNonce"`
+	CredentialStatusID  string     `json:"credentialStatusID"`
+	CredentialSubjectID string     `json:"credentialSubjectID"`
+	IssuanceDate        string     `json:"issuanceDate"`
+	Issuer              string     `json:"issuer"`
+	TemplateRoot        string     `json:"templateRoot"`
+	Siblings            [][]string `json:"siblings"`
+}
+
+func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
+	mt, err := newTemplateTree()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create template tree: %w", err)
+	}
+	templateRoot := mt.root()
+
+	p, err := extractNfromPubKey([]byte(a.PubKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract pubkey: %w", err)
+	}
+	pk, err := splitToWords(p, big.NewInt(121), big.NewInt(17))
+	if err != nil {
+		return nil, fmt.Errorf("failed to split pubkey: %w", err)
+	}
+
+	qrParser, err := newQRParser(a.QRData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create QR parser: %w", err)
+	}
+	dataPadded, dataPaddedLen, delimiterIndices, sig, err := qrParser.payload()
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract payload from QR: %w", err)
+	}
+	qrFields, err := qrParser.fields()
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract QR fields: %w", err)
+	}
+	signature, err := splitToWords(sig, big.NewInt(121), big.NewInt(17))
+	if err != nil {
+		return nil, fmt.Errorf("failed to split signature: %w", err)
+	}
+
+	credentialStatusID, err := hashvalue(a.CredentialStatusID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash credentialStatusID: %w", err)
+	}
+	credentialSubjetID, err := hashvalue(a.CredentialSubjectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash credentialSubjectID: %w", err)
+	}
+	issuanceData, err := hashvalue(a.IssuanceDate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash issuanceDate: %w", err)
+	}
+	issuer, err := hashvalue(a.IssuerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash issuer: %w", err)
+	}
+
+	proofs, err := mt.update(updateValues{
+		Birthday:            qrFields.Birthday,
+		Gender:              qrFields.Gender,
+		Pincode:             qrFields.Pincode,
+		State:               qrFields.State,
+		RevocationNonce:     big.NewInt(int64(a.CredentialStatusRevocationNonce)),
+		CredentialStatusID:  credentialStatusID,
+		CredentialSubjectID: credentialSubjetID,
+		IssuanceDate:        issuanceData,
+		Issuer:              issuer,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update template tree: %w", err)
+	}
+
+	updateSyblings := make([][]string, 0, len(proofs))
+	for _, p := range proofs {
+		// golnag library generates one extra sibling
+		// that is not needed for the circuit
+		// the last sibling should be 0 all the time
+		if p.Siblings[len(p.Siblings)-1].BigInt().Cmp(big.NewInt(0)) != 0 {
+			return nil, fmt.Errorf("last sibling should be 0")
+		}
+		updateSyblings = append(updateSyblings, circuits.PrepareSiblingsStr(p.Siblings[:treeLevel], treeLevel))
+	}
+
+	inputs := anonAadhaarV1CircuitInputs{
+		QRDataPadded:        uint8ArrayToCharArray(dataPadded),
+		QRDataPaddedLength:  dataPaddedLen,
+		DelimiterIndices:    delimiterIndices,
+		Signature:           toString(signature),
+		PubKey:              toString(pk),
+		NullifierSeed:       a.NullifierSeed,
+		SignalHash:          a.SignalHash,
+		RevocationNonce:     a.CredentialStatusRevocationNonce,
+		CredentialStatusID:  credentialStatusID.String(),
+		CredentialSubjectID: credentialSubjetID.String(),
+		IssuanceDate:        issuanceData.String(),
+		Issuer:              issuer.String(),
+		TemplateRoot:        templateRoot.String(),
+		Siblings:            updateSyblings,
+	}
+
+	jsonBytes, err := json.Marshal(inputs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal inputs: %w", err)
+	}
+
+	return jsonBytes, nil
+}
+
+func hashvalue(v interface{}) (*big.Int, error) {
+	mv, err := merklize.NewValue(merklize.PoseidonHasher{}, v)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create init merklizer: %w", err)
+	}
+	bv, err := mv.MtEntry()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create merklize entry: %w", err)
+	}
+	return bv, nil
+}
+
+// AnonAadhaarV1PubSignals public inputs
+type AnonAadhaarV1PubSignals struct {
+	PubKeyHash    string
+	Nullifier     string
+	ClaimRoot     string
+	NullifierSeed int
+	SignalHash    int
+	TemplateRoot  string
+}
+
+// PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals
+func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
+	// expected order:
+	// 0 - pubKeyHash
+	// 1 - nullifier
+	// 2 - claimRoot
+	// 3 - nullifierSeed
+	// 4 - signalHash
+	// 5 - templateRoot
+
+	const fieldLength = 6
+
+	var sVals []string
+	err := json.Unmarshal(data, &sVals)
+	if err != nil {
+		return err
+	}
+
+	if len(sVals) != fieldLength {
+		return fmt.Errorf("expected %d values, got %d", fieldLength, len(sVals))
+	}
+
+	a.PubKeyHash = sVals[0]
+	a.Nullifier = sVals[1]
+	a.ClaimRoot = sVals[2]
+	a.NullifierSeed, err = strconv.Atoi(sVals[3])
+	if err != nil {
+		return fmt.Errorf("failed to parse nullifierSeed: %w", err)
+	}
+	a.SignalHash, err = strconv.Atoi(sVals[4])
+	if err != nil {
+		return fmt.Errorf("failed to parse signalHash: %w", err)
+	}
+	a.TemplateRoot = sVals[5]
+
+	return nil
+}
+
+// GetObjMap returns struct field as a map
+func (a *AnonAadhaarV1PubSignals) GetObjMap() map[string]interface{} {
+	return toMap(a)
+}
