@@ -4,11 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"reflect"
 	"strconv"
 	"time"
 
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-schema-processor/v2/merklize"
+)
+
+const (
+	AnonAadhaarV1 circuits.CircuitID = "anonAadhaarV1"
 )
 
 type AnonAadhaarV1Inputs struct {
@@ -205,5 +210,19 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 
 // GetObjMap returns struct field as a map
 func (a *AnonAadhaarV1PubSignals) GetObjMap() map[string]interface{} {
-	return toMap(a)
+	out := make(map[string]interface{})
+
+	value := reflect.ValueOf(a)
+	if value.Kind() == reflect.Ptr {
+		value = value.Elem()
+	}
+
+	typ := value.Type()
+	for i := 0; i < value.NumField(); i++ {
+		fi := typ.Field(i)
+		if jsonTag := fi.Tag.Get("json"); jsonTag != "" {
+			out[jsonTag] = value.Field(i).Interface()
+		}
+	}
+	return out
 }

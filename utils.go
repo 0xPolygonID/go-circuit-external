@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
-	"reflect"
 	"strconv"
 
 	"github.com/lestrrat-go/jwx/v3/jwk"
@@ -88,22 +87,4 @@ func uint8ArrayToCharArray(a []uint8) []string {
 		charArray[i] = strconv.Itoa(int(v))
 	}
 	return charArray
-}
-
-func toMap(in interface{}) map[string]interface{} {
-	out := make(map[string]interface{})
-
-	value := reflect.ValueOf(in)
-	if value.Kind() == reflect.Ptr {
-		value = value.Elem()
-	}
-
-	typ := value.Type()
-	for i := 0; i < value.NumField(); i++ {
-		fi := typ.Field(i)
-		if jsonTag := fi.Tag.Get("json"); jsonTag != "" {
-			out[jsonTag] = value.Field(i).Interface()
-		}
-	}
-	return out
 }
