@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/iden3/go-circuits/v2"
+	core "github.com/iden3/go-iden3-core/v2"
+	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-schema-processor/v2/merklize"
 )
 
@@ -41,6 +43,7 @@ type anonAadhaarV1CircuitInputs struct {
 	RevocationNonce     int        `json:"revocationNonce"`
 	CredentialStatusID  string     `json:"credentialStatusID"`
 	CredentialSubjectID string     `json:"credentialSubjectID"`
+	UserID              string     `json:"userID"`
 	IssuanceDate        string     `json:"issuanceDate"`
 	Issuer              string     `json:"issuer"`
 	TemplateRoot        string     `json:"templateRoot"`
@@ -86,7 +89,15 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 	}
 	credentialSubjetID, err := hashvalue(a.CredentialSubjectID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash credentialSubjectID: %w", err)
+		return nil, fmt.Errorf("failed to hash credentialSubjectID for credential: %w", err)
+	}
+	userDID, err := w3c.ParseDID(a.CredentialSubjectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse credentialSubjectID for claim: %w", err)
+	}
+	userID, err := core.IDFromDID(*userDID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get userID: %w", err)
 	}
 	issuanceData, err := hashvalue(a.IssuanceDate)
 	if err != nil {
@@ -134,6 +145,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		RevocationNonce:     a.CredentialStatusRevocationNonce,
 		CredentialStatusID:  credentialStatusID.String(),
 		CredentialSubjectID: credentialSubjetID.String(),
+		UserID:              userID.BigInt().String(),
 		IssuanceDate:        issuanceData.String(),
 		Issuer:              issuer.String(),
 		TemplateRoot:        templateRoot.String(),
@@ -168,6 +180,8 @@ type AnonAadhaarV1PubSignals struct {
 	NullifierSeed int
 	SignalHash    int
 	TemplateRoot  string
+	HashIndex     string
+	HashValue     string
 }
 
 // PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals
@@ -179,8 +193,10 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// 3 - nullifierSeed
 	// 4 - signalHash
 	// 5 - templateRoot
+	// 6 - hashIndex
+	// 7 - hashValue
 
-	const fieldLength = 6
+	const fieldLength = 8
 
 	var sVals []string
 	err := json.Unmarshal(data, &sVals)
@@ -204,6 +220,8 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 		return fmt.Errorf("failed to parse signalHash: %w", err)
 	}
 	a.TemplateRoot = sVals[5]
+	a.HashIndex = sVals[6]
+	a.HashValue = sVals[7]
 
 	return nil
 }
