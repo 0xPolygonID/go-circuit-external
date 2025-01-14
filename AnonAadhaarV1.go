@@ -211,17 +211,17 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	a.PubKeyHash = sVals[0]
 	a.Nullifier = sVals[1]
 	a.ClaimRoot = sVals[2]
-	a.NullifierSeed, err = strconv.Atoi(sVals[3])
+	a.HashIndex = sVals[3]
+	a.HashValue = sVals[4]
+	a.NullifierSeed, err = strconv.Atoi(sVals[5])
 	if err != nil {
 		return fmt.Errorf("failed to parse nullifierSeed: %w", err)
 	}
-	a.SignalHash, err = strconv.Atoi(sVals[4])
+	a.SignalHash, err = strconv.Atoi(sVals[6])
 	if err != nil {
 		return fmt.Errorf("failed to parse signalHash: %w", err)
 	}
-	a.TemplateRoot = sVals[5]
-	a.HashIndex = sVals[6]
-	a.HashValue = sVals[7]
+	a.TemplateRoot = sVals[7]
 
 	return nil
 }
