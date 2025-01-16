@@ -30,6 +30,7 @@ var updateTemplate = []leaf{
 	newleaf("1763085948543522232029667616550496120517967703023484347613954302553484294902", "0"),  // revocationNonce
 	newleaf("11896622783611378286548274235251973588039499084629981048616800443645803129554", "0"), // credentialStatusID
 	newleaf("4792130079462681165428511201253235850015648352883240577315026477780493110675", "0"),  // credentialSubjectID
+	newleaf("13483382060079230067188057675928039600565406666878111320562435194759310415773", "0"), // expirationDate
 	newleaf("8713837106709436881047310678745516714551061952618778897121563913918335939585", "0"),  // issuanceDate
 	newleaf("5940025296598751562822259677636111513267244048295724788691376971035167813215", "0"),  // issuer
 }
@@ -42,6 +43,7 @@ type updateValues struct {
 	RevocationNonce     *big.Int
 	CredentialStatusID  *big.Int
 	CredentialSubjectID *big.Int
+	ExpirationDate      *big.Int
 	IssuanceDate        *big.Int
 	Issuer              *big.Int
 }
@@ -55,6 +57,7 @@ func (u *updateValues) toList() []*big.Int {
 		u.RevocationNonce,
 		u.CredentialStatusID,
 		u.CredentialSubjectID,
+		u.ExpirationDate,
 		u.IssuanceDate,
 		u.Issuer,
 	}

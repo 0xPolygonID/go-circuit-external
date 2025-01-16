@@ -14,6 +14,10 @@ import (
 	"github.com/iden3/go-schema-processor/v2/merklize"
 )
 
+// we need to patch time.Now to get the same issued and expiration dates
+// for unit tests
+var now = time.Now()
+
 const (
 	AnonAadhaarV1 circuits.CircuitID = "anonAadhaarV1"
 )
@@ -21,10 +25,9 @@ const (
 type AnonAadhaarV1Inputs struct {
 	QRData *big.Int `json:"qrData"`
 	// Generated on mobile app values
-	IssuanceDate                    time.Time `json:"issuanceDate"`                    // issuanceDate
-	CredentialSubjectID             string    `json:"credentialSubjectID"`             // credentialSubject.id
-	CredentialStatusRevocationNonce int       `json:"credentialStatusRevocationNonce"` // credentialStatus.revocationNonce
-	CredentialStatusID              string    `json:"credentialStatusID"`              // credentialStatus.id
+	CredentialSubjectID             string `json:"credentialSubjectID"`             // credentialSubject.id
+	CredentialStatusRevocationNonce int    `json:"credentialStatusRevocationNonce"` // credentialStatus.revocationNonce
+	CredentialStatusID              string `json:"credentialStatusID"`              // credentialStatus.id
 	// Mobile dynamic values with Firebase config
 	IssuerID      string `json:"issuerID"`      // issuer
 	PubKey        string `json:"pubKey"`        // pubKey
@@ -44,6 +47,7 @@ type anonAadhaarV1CircuitInputs struct {
 	CredentialStatusID  string     `json:"credentialStatusID"`
 	CredentialSubjectID string     `json:"credentialSubjectID"`
 	UserID              string     `json:"userID"`
+	ExpirationDate      string     `json:"expirationDate"`
 	IssuanceDate        string     `json:"issuanceDate"`
 	Issuer              string     `json:"issuer"`
 	TemplateRoot        string     `json:"templateRoot"`
@@ -99,10 +103,17 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get userID: %w", err)
 	}
-	issuanceData, err := hashvalue(a.IssuanceDate)
+
+	currentTime := now
+	issuanceDate, err := hashvalue(currentTime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash issuanceDate: %w", err)
 	}
+	expirationDate, err := hashvalue(currentTime.AddDate(0, 6, 0))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash expirationDate: %w", err)
+	}
+
 	issuer, err := hashvalue(a.IssuerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash issuer: %w", err)
@@ -116,7 +127,8 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		RevocationNonce:     big.NewInt(int64(a.CredentialStatusRevocationNonce)),
 		CredentialStatusID:  credentialStatusID,
 		CredentialSubjectID: credentialSubjetID,
-		IssuanceDate:        issuanceData,
+		ExpirationDate:      expirationDate,
+		IssuanceDate:        issuanceDate,
 		Issuer:              issuer,
 	})
 	if err != nil {
@@ -146,7 +158,8 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		CredentialStatusID:  credentialStatusID.String(),
 		CredentialSubjectID: credentialSubjetID.String(),
 		UserID:              userID.BigInt().String(),
-		IssuanceDate:        issuanceData.String(),
+		ExpirationDate:      expirationDate.String(),
+		IssuanceDate:        issuanceDate.String(),
 		Issuer:              issuer.String(),
 		TemplateRoot:        templateRoot.String(),
 		Siblings:            updateSyblings,
@@ -174,14 +187,15 @@ func hashvalue(v interface{}) (*big.Int, error) {
 
 // AnonAadhaarV1PubSignals public inputs
 type AnonAadhaarV1PubSignals struct {
-	PubKeyHash    string
-	Nullifier     string
-	ClaimRoot     string
-	NullifierSeed int
-	SignalHash    int
-	TemplateRoot  string
-	HashIndex     string
-	HashValue     string
+	PubKeyHash     string
+	Nullifier      string
+	ClaimRoot      string
+	HashIndex      string
+	HashValue      string
+	NullifierSeed  int
+	SignalHash     int
+	ExpirationDate string
+	TemplateRoot   string
 }
 
 // PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals
@@ -190,13 +204,14 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// 0 - pubKeyHash
 	// 1 - nullifier
 	// 2 - claimRoot
-	// 3 - nullifierSeed
-	// 4 - signalHash
-	// 5 - templateRoot
-	// 6 - hashIndex
-	// 7 - hashValue
+	// 3 - hashIndex
+	// 4 - hashValue
+	// 5 - nullifierSeed
+	// 6 - signalHash
+	// 7 - expirationDate
+	// 8 - templateRoot
 
-	const fieldLength = 8
+	const fieldLength = 9
 
 	var sVals []string
 	err := json.Unmarshal(data, &sVals)
@@ -221,7 +236,8 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse signalHash: %w", err)
 	}
-	a.TemplateRoot = sVals[7]
+	a.ExpirationDate = sVals[7]
+	a.TemplateRoot = sVals[8]
 
 	return nil
 }

@@ -34,14 +34,10 @@ func TestAnonAadhaarV1(t *testing.T) {
 }
 
 func TestAnonAadhaarInputsMarshalV1(t *testing.T) {
-	issuanceData, err := time.Parse(time.RFC3339Nano, "2024-12-23T20:53:09.512228532Z")
-	require.NoError(t, err)
-
 	bi, ok := big.NewInt(0).SetString(testdata, 10)
 	require.True(t, ok)
 	inputs := AnonAadhaarV1Inputs{
 		QRData:                          bi,
-		IssuanceDate:                    issuanceData,
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: 954548273,
@@ -58,6 +54,10 @@ Q5I3LVZhZ3abc1uhLKNYD5GcG9i6cMTCqwrPKwm8L66YHzwClabh6fJI9QBzCU/6
 		NullifierSeed: 12345678,
 		SignalHash:    1001,
 	}
+
+	// since time is dinamically generated, we neet to patch time.Now
+	// to get the same issued and expiration dates
+	now = time.Unix(1737047441, 857548000)
 
 	inputsMarshal, err := inputs.InputsMarshal()
 	require.NoError(t, err)
@@ -78,14 +78,15 @@ func TestAnonAadhaarPubSignalsUnmarshaling(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := AnonAadhaarV1PubSignals{
-		PubKeyHash:    "15134874015316324267425466444584014077184337590635665158241104437045239495873",
-		Nullifier:     "20883870714734602590504997352338571539423183306657935615322485719404078821399",
-		ClaimRoot:     "440354795020186637131786307576016381968603262412779561544441506727441642641",
-		NullifierSeed: 12345678,
-		SignalHash:    1001,
-		TemplateRoot:  "11110004723728063558275617055101836747450700474263948138181822415941991384038",
-		HashIndex:     "16890017624039144676232207799246105570874701447257425357355660902379658316851",
-		HashValue:     "3673141611637303612891330806851320518035338013474283360361546925486435373793",
+		PubKeyHash:     "15134874015316324267425466444584014077184337590635665158241104437045239495873",
+		Nullifier:      "20883870714734602590504997352338571539423183306657935615322485719404078821399",
+		ClaimRoot:      "2022285980230841826575403014084726198291174154220347056283122720651390139932",
+		HashIndex:      "13039476548630721203894687416378102242244408821219051183016610631741900125051",
+		HashValue:      "8843500908059138742605053573165451201247533598773183651401723402219499202506",
+		NullifierSeed:  12345678,
+		SignalHash:     1001,
+		ExpirationDate: "1752682241857548000",
+		TemplateRoot:   "19885546056720838706860449020869651677281577675447204956487418402102594191373",
 	}
 
 	require.Equal(t, expected, *signals)
