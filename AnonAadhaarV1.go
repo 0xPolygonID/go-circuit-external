@@ -16,7 +16,7 @@ import (
 
 // we need to patch time.Now to get the same issued and expiration dates
 // for unit tests
-var now = time.Now()
+var now = time.Now().UTC()
 
 const (
 	AnonAadhaarV1 circuits.CircuitID = "anonAadhaarV1"
