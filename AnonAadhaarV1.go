@@ -109,10 +109,21 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash issuanceDate: %w", err)
 	}
-	expirationDate, err := hashvalue(currentTime.AddDate(0, 6, 0))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash expirationDate: %w", err)
+
+	expirationDate := currentTime.AddDate(0, 6, 0)
+	// we need this check to ensure
+	// that we can reproduce the same expiration date in the circuit.
+	// Since the circuit recovers the expiration date nanoseconds from the timestamp in unix
+	if err = isTimeUnderPrime(expirationDate); err != nil {
+		return nil, fmt.Errorf(
+			"expiration date '%s' out of prime: %w", expirationDate, err)
 	}
+
+	// convert timestamp to nanoseconds (Unix time)
+	// ensure expirationDate field in the verifiable credential ends in zeros,
+	// representing nanoseconds, e.g., 2025-12-23T20:53:09.000000000Z
+	expirationDateUnix := big.NewInt(expirationDate.Unix())
+	expirationDateUnixNano := new(big.Int).Mul(expirationDateUnix, big.NewInt(1_000_000_000))
 
 	issuer, err := hashvalue(a.IssuerID)
 	if err != nil {
@@ -127,7 +138,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		RevocationNonce:     big.NewInt(int64(a.CredentialStatusRevocationNonce)),
 		CredentialStatusID:  credentialStatusID,
 		CredentialSubjectID: credentialSubjetID,
-		ExpirationDate:      expirationDate,
+		ExpirationDate:      expirationDateUnixNano,
 		IssuanceDate:        issuanceDate,
 		Issuer:              issuer,
 	})
@@ -158,7 +169,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		CredentialStatusID:  credentialStatusID.String(),
 		CredentialSubjectID: credentialSubjetID.String(),
 		UserID:              userID.BigInt().String(),
-		ExpirationDate:      expirationDate.String(),
+		ExpirationDate:      expirationDateUnix.String(),
 		IssuanceDate:        issuanceDate.String(),
 		Issuer:              issuer.String(),
 		TemplateRoot:        templateRoot.String(),

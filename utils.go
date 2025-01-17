@@ -3,9 +3,11 @@ package gocircuitexternal
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
+	"time"
 
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
@@ -87,4 +89,21 @@ func uint8ArrayToCharArray(a []uint8) []string {
 		charArray[i] = strconv.Itoa(int(v))
 	}
 	return charArray
+}
+
+func isTimeUnderPrime(t time.Time) error {
+	var x = new(big.Int).Mul(
+		big.NewInt(t.Unix()),
+		big.NewInt(1_000_000_000),
+	)
+	x.Add(x, big.NewInt(int64(t.Nanosecond())))
+
+	expirationDateHash, err := hashvalue(t)
+	if err != nil {
+		return err
+	}
+	if expirationDateHash.Cmp(x) != 0 {
+		return errors.New("expiration date is not fit to prime number")
+	}
+	return nil
 }

@@ -1,8 +1,8 @@
 module github.com/0xPolygonID/go-circuit-external
 
-go 1.22.6
+go 1.23.4
 
-toolchain go1.22.10
+toolchain go1.23.5
 
 require (
 	github.com/iden3/go-circuits/v2 v2.4.0
