@@ -5,6 +5,7 @@ go 1.23.4
 toolchain go1.23.5
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/iden3/go-circuits/v2 v2.4.0
 	github.com/iden3/go-iden3-core/v2 v2.3.1
 	github.com/iden3/go-merkletree-sql/v2 v2.0.6

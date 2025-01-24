@@ -6,17 +6,14 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
-	"time"
 
+	"github.com/google/uuid"
 	"github.com/iden3/go-circuits/v2"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-schema-processor/v2/merklize"
+	"github.com/iden3/go-schema-processor/v2/verifiable"
 )
-
-// we need to patch time.Now to get the same issued and expiration dates
-// for unit tests
-var now = time.Now().UTC()
 
 const (
 	AnonAadhaarV1 circuits.CircuitID = "anonAadhaarV1"
@@ -47,11 +44,57 @@ type anonAadhaarV1CircuitInputs struct {
 	CredentialStatusID  string     `json:"credentialStatusID"`
 	CredentialSubjectID string     `json:"credentialSubjectID"`
 	UserID              string     `json:"userID"`
-	ExpirationDate      string     `json:"expirationDate"`
-	IssuanceDate        string     `json:"issuanceDate"`
+	ExpirationTime      int64      `json:"expirationTime"`
 	Issuer              string     `json:"issuer"`
 	TemplateRoot        string     `json:"templateRoot"`
 	Siblings            [][]string `json:"siblings"`
+}
+
+func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
+	ah := &AnonAadhaarDataV2{}
+	err := ah.UnmarshalQR(a.QRData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal QRData: %w", err)
+	}
+	vcpayload, err := NewVC(ah)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create QRInputs: %w", err)
+	}
+
+	// TODO (illia-korotia): how to do this schema fully dynamic?
+	// to do the schema dynamicly we need to generate template root dynamically also
+	return &verifiable.W3CCredential{
+		ID: uuid.New().String(),
+		Context: []string{
+			"https://www.w3.org/2018/credentials/v1",
+			"https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
+			"https://gist.githubusercontent.com/ilya-korotya/078de56c274d44ea5a9579e137bd4301/raw/bfc67afc2246cf40a3fc508f0de9f689f318373d/AnonAadhaar.jsonld",
+		},
+		Type: []string{
+			"VerifiableCredential",
+			"AnonAadhaar",
+		},
+		IssuanceDate: &vcpayload.IssuanceDate,
+		Expiration:   &vcpayload.ExpirationDate,
+		CredentialSubject: map[string]interface{}{
+			"birthday": vcpayload.Birthday,
+			"gender":   vcpayload.Gender,
+			"id":       a.CredentialSubjectID,
+			"pinCode":  vcpayload.Pincode,
+			"state":    vcpayload.State,
+			"type":     "AnonAadhaar",
+		},
+		CredentialStatus: &verifiable.CredentialStatus{
+			ID:              "https://issuer-node-core-api-demo.privado.id/v2/agent",
+			RevocationNonce: 954548273,
+			Type:            "Iden3commRevocationStatusV1.0",
+		},
+		Issuer: a.IssuerID,
+		CredentialSchema: verifiable.CredentialSchema{
+			ID:   "https://gist.githubusercontent.com/ilya-korotya/601c46ca5a7487ae6e1946b4aab22b1d/raw/3aa88a8dd666253869fb0d86ae58d0ce3d040203/AnonAadhaar.json",
+			Type: "JsonSchema2023",
+		},
+	}, nil
 }
 
 func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
@@ -70,21 +113,14 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		return nil, fmt.Errorf("failed to split pubkey: %w", err)
 	}
 
-	qrParser, err := newQRParser(a.QRData)
+	ah := &AnonAadhaarDataV2{}
+	err = ah.UnmarshalQR(a.QRData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create QR parser: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal QRData: %w", err)
 	}
-	dataPadded, dataPaddedLen, delimiterIndices, sig, err := qrParser.payload()
+	qrInputs, err := NewQRInputs(ah)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract payload from QR: %w", err)
-	}
-	qrFields, err := qrParser.fields()
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract QR fields: %w", err)
-	}
-	signature, err := splitToWords(sig, big.NewInt(121), big.NewInt(17))
-	if err != nil {
-		return nil, fmt.Errorf("failed to split signature: %w", err)
+		return nil, fmt.Errorf("failed to create QRInputs: %w", err)
 	}
 
 	credentialStatusID, err := hashvalue(a.CredentialStatusID)
@@ -104,42 +140,21 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		return nil, fmt.Errorf("failed to get userID: %w", err)
 	}
 
-	currentTime := now
-	issuanceDate, err := hashvalue(currentTime)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash issuanceDate: %w", err)
-	}
-
-	expirationDate := currentTime.AddDate(0, 6, 0)
-	// we need this check to ensure
-	// that we can reproduce the same expiration date in the circuit.
-	// Since the circuit recovers the expiration date nanoseconds from the timestamp in unix
-	if err = isTimeUnderPrime(expirationDate); err != nil {
-		return nil, fmt.Errorf(
-			"expiration date '%s' out of prime: %w", expirationDate, err)
-	}
-
-	// convert timestamp to nanoseconds (Unix time)
-	// ensure expirationDate field in the verifiable credential ends in zeros,
-	// representing nanoseconds, e.g., 2025-12-23T20:53:09.000000000Z
-	expirationDateUnix := big.NewInt(expirationDate.Unix())
-	expirationDateUnixNano := new(big.Int).Mul(expirationDateUnix, big.NewInt(1_000_000_000))
-
 	issuer, err := hashvalue(a.IssuerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash issuer: %w", err)
 	}
 
 	proofs, err := mt.update(updateValues{
-		Birthday:            qrFields.Birthday,
-		Gender:              qrFields.Gender,
-		Pincode:             qrFields.Pincode,
-		State:               qrFields.State,
+		Birthday:            qrInputs.Birthday,
+		Gender:              qrInputs.Gender,
+		Pincode:             qrInputs.Pincode,
+		State:               qrInputs.State,
 		RevocationNonce:     big.NewInt(int64(a.CredentialStatusRevocationNonce)),
 		CredentialStatusID:  credentialStatusID,
 		CredentialSubjectID: credentialSubjetID,
-		ExpirationDate:      expirationDateUnixNano,
-		IssuanceDate:        issuanceDate,
+		ExpirationDate:      qrInputs.ExpirationDate,
+		IssuanceDate:        qrInputs.IssuanceDate,
 		Issuer:              issuer,
 	})
 	if err != nil {
@@ -158,10 +173,10 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 	}
 
 	inputs := anonAadhaarV1CircuitInputs{
-		QRDataPadded:        uint8ArrayToCharArray(dataPadded),
-		QRDataPaddedLength:  dataPaddedLen,
-		DelimiterIndices:    delimiterIndices,
-		Signature:           toString(signature),
+		QRDataPadded:        qrInputs.DataPadded,
+		QRDataPaddedLength:  qrInputs.DataPaddedLen,
+		DelimiterIndices:    qrInputs.DelimiterIndices,
+		Signature:           qrInputs.Signature,
 		PubKey:              toString(pk),
 		NullifierSeed:       a.NullifierSeed,
 		SignalHash:          a.SignalHash,
@@ -169,8 +184,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		CredentialStatusID:  credentialStatusID.String(),
 		CredentialSubjectID: credentialSubjetID.String(),
 		UserID:              userID.BigInt().String(),
-		ExpirationDate:      expirationDateUnix.String(),
-		IssuanceDate:        issuanceDate.String(),
+		ExpirationTime:      halfYearSeconds,
 		Issuer:              issuer.String(),
 		TemplateRoot:        templateRoot.String(),
 		Siblings:            updateSyblings,
@@ -200,12 +214,12 @@ func hashvalue(v interface{}) (*big.Int, error) {
 type AnonAadhaarV1PubSignals struct {
 	PubKeyHash     string
 	Nullifier      string
-	ClaimRoot      string
 	HashIndex      string
 	HashValue      string
+	IssuanceDate   string
+	ExpirationDate string
 	NullifierSeed  int
 	SignalHash     int
-	ExpirationDate string
 	TemplateRoot   string
 }
 
@@ -214,12 +228,12 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// expected order:
 	// 0 - pubKeyHash
 	// 1 - nullifier
-	// 2 - claimRoot
-	// 3 - hashIndex
-	// 4 - hashValue
-	// 5 - nullifierSeed
-	// 6 - signalHash
-	// 7 - expirationDate
+	// 2 - hashIndex
+	// 3 - hashValue
+	// 4 - issuanceDate
+	// 5 - expirationDate
+	// 6 - nullifierSeed
+	// 7 - signalHash
 	// 8 - templateRoot
 
 	const fieldLength = 9
@@ -236,18 +250,18 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 
 	a.PubKeyHash = sVals[0]
 	a.Nullifier = sVals[1]
-	a.ClaimRoot = sVals[2]
-	a.HashIndex = sVals[3]
-	a.HashValue = sVals[4]
-	a.NullifierSeed, err = strconv.Atoi(sVals[5])
+	a.HashIndex = sVals[2]
+	a.HashValue = sVals[3]
+	a.IssuanceDate = sVals[4]
+	a.ExpirationDate = sVals[5]
+	a.NullifierSeed, err = strconv.Atoi(sVals[6])
 	if err != nil {
 		return fmt.Errorf("failed to parse nullifierSeed: %w", err)
 	}
-	a.SignalHash, err = strconv.Atoi(sVals[6])
+	a.SignalHash, err = strconv.Atoi(sVals[7])
 	if err != nil {
 		return fmt.Errorf("failed to parse signalHash: %w", err)
 	}
-	a.ExpirationDate = sVals[7]
 	a.TemplateRoot = sVals[8]
 
 	return nil
