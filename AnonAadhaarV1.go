@@ -68,7 +68,7 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		Context: []string{
 			"https://www.w3.org/2018/credentials/v1",
 			"https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
-			"https://gist.githubusercontent.com/ilya-korotya/078de56c274d44ea5a9579e137bd4301/raw/bfc67afc2246cf40a3fc508f0de9f689f318373d/AnonAadhaar.jsonld",
+			"ipfs://QmYcmkJeSDcaTSDfVkMMh7Xay83dJeEc9HDy2Mh8J7gLJA",
 		},
 		Type: []string{
 			"VerifiableCredential",
@@ -85,13 +85,13 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 			"type":     "AnonAadhaar",
 		},
 		CredentialStatus: &verifiable.CredentialStatus{
-			ID:              "https://issuer-node-core-api-demo.privado.id/v2/agent",
-			RevocationNonce: 954548273,
-			Type:            "Iden3commRevocationStatusV1.0",
+			ID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+			RevocationNonce: 0,
+			Type:            "Iden3OnchainSparseMerkleTreeProof2023",
 		},
 		Issuer: a.IssuerID,
 		CredentialSchema: verifiable.CredentialSchema{
-			ID:   "https://gist.githubusercontent.com/ilya-korotya/601c46ca5a7487ae6e1946b4aab22b1d/raw/3aa88a8dd666253869fb0d86ae58d0ce3d040203/AnonAadhaar.json",
+			ID:   "ipfs://QmeTNnum9CThm6f7eBSxWuDQBTZC7EQrawr3AD6UJw38GM",
 			Type: "JsonSchema2023",
 		},
 	}, nil
@@ -221,6 +221,7 @@ type AnonAadhaarV1PubSignals struct {
 	NullifierSeed  int
 	SignalHash     int
 	TemplateRoot   string
+	IssuerDIDHash  string
 }
 
 // PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals
@@ -235,8 +236,9 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// 6 - nullifierSeed
 	// 7 - signalHash
 	// 8 - templateRoot
+	// 9 - issuerDIDHash
 
-	const fieldLength = 9
+	const fieldLength = 10
 
 	var sVals []string
 	err := json.Unmarshal(data, &sVals)
@@ -263,6 +265,7 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 		return fmt.Errorf("failed to parse signalHash: %w", err)
 	}
 	a.TemplateRoot = sVals[8]
+	a.IssuerDIDHash = sVals[9]
 
 	return nil
 }

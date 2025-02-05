@@ -41,8 +41,8 @@ func TestAnonAadhaarInputsMarshalV1(t *testing.T) {
 		QRData:                          bi,
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-		CredentialStatusRevocationNonce: 954548273,
-		CredentialStatusID:              "https://issuer-node-core-api-demo.privado.id/v2/agent",
+		CredentialStatusRevocationNonce: 0,
+		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
 BAVbKt9G3HGcVrWO7hmZle+hoyVHEGIKx4Ael29E475FTbDxkOP31ONZiXIRc0Te
@@ -106,13 +106,14 @@ func TestAnonAadhaarPubSignalsUnmarshaling(t *testing.T) {
 	expected := AnonAadhaarV1PubSignals{
 		PubKeyHash:     "15134874015316324267425466444584014077184337590635665158241104437045239495873",
 		Nullifier:      "20883870714734602590504997352338571539423183306657935615322485719404078821399",
-		HashIndex:      "8923283466217416480773874563455206948461339349268869321689548437848985912355",
-		HashValue:      "8516819303316620709053690018385969135966989083300174900628437254826157571292",
+		HashIndex:      "4495749602680683476365464685207358157516802663665444189094863568693702095171",
+		HashValue:      "18008128381428548624282039899106504460765785745693349906422544723715663713055",
 		IssuanceDate:   "1552023000",
 		ExpirationDate: "1567799640",
 		NullifierSeed:  12345678,
 		SignalHash:     1001,
-		TemplateRoot:   "19885546056720838706860449020869651677281577675447204956487418402102594191373",
+		TemplateRoot:   "3760048933127269188109079349507397743444241277603345236696660118069105661581",
+		IssuerDIDHash:  "12146166192964646439780403715116050536535442384123009131510511003232108502337",
 	}
 
 	require.Equal(t, expected, *signals)
@@ -120,36 +121,36 @@ func TestAnonAadhaarPubSignalsUnmarshaling(t *testing.T) {
 
 func TestW3CCredential(t *testing.T) {
 	expectedCredential := `{
-    "@context": [
-      "https://www.w3.org/2018/credentials/v1",
-      "https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
-      "https://gist.githubusercontent.com/ilya-korotya/078de56c274d44ea5a9579e137bd4301/raw/bfc67afc2246cf40a3fc508f0de9f689f318373d/AnonAadhaar.jsonld"
-    ],
-    "type": [
-      "VerifiableCredential",
-      "AnonAadhaar"
-    ],
-    "issuanceDate": "2019-03-08T05:30:00Z",
-	"expirationDate": "2019-09-06T19:54:00Z",
-    "credentialSubject": {
-      "birthday": 19840101,
-      "gender": 77,
-      "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-      "pinCode": 110051,
-      "state": 452723500356,
-      "type": "AnonAadhaar"
-    },
-    "credentialStatus": {
-      "id": "https://issuer-node-core-api-demo.privado.id/v2/agent",
-      "revocationNonce": 954548273,
-      "type": "Iden3commRevocationStatusV1.0"
-    },
-    "issuer": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
-    "credentialSchema": {
-      "id": "https://gist.githubusercontent.com/ilya-korotya/601c46ca5a7487ae6e1946b4aab22b1d/raw/3aa88a8dd666253869fb0d86ae58d0ce3d040203/AnonAadhaar.json",
-      "type": "JsonSchema2023"
-    }
-}`
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
+        "ipfs://QmYcmkJeSDcaTSDfVkMMh7Xay83dJeEc9HDy2Mh8J7gLJA"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "AnonAadhaar"
+      ],
+      "issuanceDate": "2019-03-08T05:30:00Z",
+      "expirationDate": "2019-09-06T19:54:00Z",
+      "credentialSubject": {
+        "birthday": 19840101,
+        "gender": 77,
+        "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
+        "pinCode": 110051,
+        "state": 452723500356,
+        "type": "AnonAadhaar"
+      },
+      "credentialStatus": {
+        "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+        "revocationNonce": 0,
+      	"type": "Iden3OnchainSparseMerkleTreeProof2023"
+      },
+      "issuer": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
+      "credentialSchema": {
+        "id": "ipfs://QmeTNnum9CThm6f7eBSxWuDQBTZC7EQrawr3AD6UJw38GM",
+        "type": "JsonSchema2023"
+      }
+    }`
 
 	bi, ok := big.NewInt(0).SetString(testdata, 10)
 	require.True(t, ok)
@@ -157,8 +158,8 @@ func TestW3CCredential(t *testing.T) {
 		QRData:                          bi,
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-		CredentialStatusRevocationNonce: 954548273,
-		CredentialStatusID:              "https://issuer-node-core-api-demo.privado.id/v2/agent",
+		CredentialStatusRevocationNonce: 0,
+		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
 BAVbKt9G3HGcVrWO7hmZle+hoyVHEGIKx4Ael29E475FTbDxkOP31ONZiXIRc0Te
