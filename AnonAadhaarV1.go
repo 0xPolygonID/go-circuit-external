@@ -61,10 +61,8 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		return nil, fmt.Errorf("failed to create QRInputs: %w", err)
 	}
 
-	// TODO (illia-korotia): how to do this schema fully dynamic?
-	// to do the schema dynamicly we need to generate template root dynamically also
 	return &verifiable.W3CCredential{
-		ID: uuid.New().String(),
+		ID: fmt.Sprintf("urn:uuid:%s", uuid.New().String()),
 		Context: []string{
 			"https://www.w3.org/2018/credentials/v1",
 			"https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
@@ -85,7 +83,7 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 			"type":     "AnonAadhaar",
 		},
 		CredentialStatus: &verifiable.CredentialStatus{
-			ID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+			ID:              a.CredentialStatusID,
 			RevocationNonce: 0,
 			Type:            "Iden3OnchainSparseMerkleTreeProof2023",
 		},
