@@ -84,7 +84,7 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		},
 		CredentialStatus: &verifiable.CredentialStatus{
 			ID:              a.CredentialStatusID,
-			RevocationNonce: 0,
+			RevocationNonce: uint64(a.CredentialStatusRevocationNonce),
 			Type:            "Iden3OnchainSparseMerkleTreeProof2023",
 		},
 		Issuer: a.IssuerID,
