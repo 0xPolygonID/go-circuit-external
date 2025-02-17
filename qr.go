@@ -10,6 +10,8 @@ import (
 	"math/big"
 	"strconv"
 	"time"
+
+	"github.com/iden3/go-iden3-crypto/poseidon"
 )
 
 type GenderString string
@@ -207,9 +209,10 @@ func newQRParser(data *big.Int) (*qrParser, error) {
 
 type VC struct {
 	Birthday int
-	Gender   int
+	Gender   string
 	Pincode  int
-	State    int
+	State    string
+	Name     string
 
 	IssuanceDate   time.Time
 	ExpirationDate time.Time
@@ -222,20 +225,18 @@ func NewVC(data *AnonAadhaarDataV2) (*VC, error) {
 
 	t, _ := time.Parse("01-02-2006", data.DateOfBirth)
 	birthday := t.Year()*10000 + int(t.Month())*100 + t.Day()
-	gender := GenderString(data.Gender).Int()
 	pincode, err := strconv.Atoi(data.Address.PinCode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse pincode '%s': %w", data.Address.PinCode, err)
 	}
-	state := big.NewInt(0).SetBytes(reverseBytes([]byte(data.Address.State))).Int64()
-
 	expirationDate := data.SignedTime.Add(halfYearSeconds * time.Second)
 
 	return &VC{
 		Birthday: birthday,
-		Gender:   int(gender),
+		Gender:   data.Gender,
 		Pincode:  pincode,
-		State:    int(state),
+		State:    data.Address.State,
+		Name:     data.Name,
 
 		IssuanceDate:   data.SignedTime,
 		ExpirationDate: expirationDate,
@@ -247,6 +248,7 @@ type QrInputs struct {
 	Gender   *big.Int
 	Pincode  *big.Int
 	State    *big.Int
+	Name     *big.Int
 
 	IssuanceDate   *big.Int
 	ExpirationDate *big.Int
@@ -266,12 +268,10 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 	birthday := big.NewInt(
 		int64(t.Year()*10000 + int(t.Month())*100 + t.Day()),
 	)
-	gender := GenderString(data.Gender).Int()
 	pincode, err := strconv.Atoi(data.Address.PinCode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse pincode '%s': %w", data.Address.PinCode, err)
 	}
-	state := big.NewInt(0).SetBytes(reverseBytes([]byte(data.Address.State)))
 
 	expirationDate := data.SignedTime.Add(halfYearSeconds * time.Second)
 	issuanceDateNano := new(big.Int).Mul(
@@ -305,11 +305,25 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 		return nil, fmt.Errorf("failed to split signature: %w", err)
 	}
 
+	genderHash, err := poseidon.HashBytes([]byte(data.Gender))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash(gender): %w", err)
+	}
+	stateHash, err := poseidon.HashBytes([]byte(data.Address.State))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash(state): %w", err)
+	}
+	nameHash, err := poseidon.HashBytes([]byte(data.Name))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash(name): %w", err)
+	}
+
 	return &QrInputs{
 		Birthday: birthday,
-		Gender:   big.NewInt(int64(gender)),
+		Gender:   genderHash,
 		Pincode:  big.NewInt(int64(pincode)),
-		State:    state,
+		State:    stateHash,
+		Name:     nameHash,
 
 		IssuanceDate:   issuanceDateNano,
 		ExpirationDate: expirationDateNano,

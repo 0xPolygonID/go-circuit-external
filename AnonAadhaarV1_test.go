@@ -75,8 +75,8 @@ func TestLatestQR(t *testing.T) {
 		QRData:                          qrDataBI,
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-		CredentialStatusRevocationNonce: 954548273,
-		CredentialStatusID:              "https://issuer-node-core-api-demo.privado.id/v2/agent",
+		CredentialStatusRevocationNonce: 0,
+		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
 BAVbKt9G3HGcVrWO7hmZle+hoyVHEGIKx4Ael29E475FTbDxkOP31ONZiXIRc0Te
@@ -92,7 +92,14 @@ Q5I3LVZhZ3abc1uhLKNYD5GcG9i6cMTCqwrPKwm8L66YHzwClabh6fJI9QBzCU/6
 
 	inputsMarshal, err := inputs.InputsMarshal()
 	require.NoError(t, err)
-	fmt.Println(string(inputsMarshal))
+	fmt.Println("circuit inputs:", string(inputsMarshal))
+
+	verifiableCredential, err := inputs.W3CCredential()
+	require.NoError(t, err)
+	jsonVC, err := json.MarshalIndent(verifiableCredential, "", "  ")
+	require.NoError(t, err)
+
+	fmt.Println("verifiable credential:", string(jsonVC))
 }
 
 func TestAnonAadhaarPubSignalsUnmarshaling(t *testing.T) {

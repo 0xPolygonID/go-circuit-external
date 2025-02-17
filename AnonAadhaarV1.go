@@ -66,7 +66,7 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		Context: []string{
 			"https://www.w3.org/2018/credentials/v1",
 			"https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
-			"ipfs://QmYcmkJeSDcaTSDfVkMMh7Xay83dJeEc9HDy2Mh8J7gLJA",
+			"ipfs://QmQvtq9ZYQ288etj2SkFyYtADt5DY77ZTjUz6xFVjoPzhU",
 		},
 		Type: []string{
 			"VerifiableCredential",
@@ -75,12 +75,13 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		IssuanceDate: &vcpayload.IssuanceDate,
 		Expiration:   &vcpayload.ExpirationDate,
 		CredentialSubject: map[string]interface{}{
-			"birthday": vcpayload.Birthday,
-			"gender":   vcpayload.Gender,
-			"id":       a.CredentialSubjectID,
-			"pinCode":  vcpayload.Pincode,
-			"state":    vcpayload.State,
-			"type":     "AnonAadhaar",
+			"dateOfBirth": vcpayload.Birthday,
+			"gender":      string(vcpayload.Gender),
+			"id":          a.CredentialSubjectID,
+			"pinCode":     vcpayload.Pincode,
+			"state":       string(vcpayload.State),
+			"name":        string(vcpayload.Name),
+			"type":        "AnonAadhaar",
 		},
 		CredentialStatus: &verifiable.CredentialStatus{
 			ID:              a.CredentialStatusID,
@@ -89,7 +90,7 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		},
 		Issuer: a.IssuerID,
 		CredentialSchema: verifiable.CredentialSchema{
-			ID:   "ipfs://QmeTNnum9CThm6f7eBSxWuDQBTZC7EQrawr3AD6UJw38GM",
+			ID:   "ipfs://QmQmC2zQSuRWQgubK1tFG1uz4mVoiY3LYha1d5g1BPwfMq",
 			Type: "JsonSchema2023",
 		},
 	}, nil
@@ -148,6 +149,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		Gender:              qrInputs.Gender,
 		Pincode:             qrInputs.Pincode,
 		State:               qrInputs.State,
+		Name:                qrInputs.Name,
 		RevocationNonce:     big.NewInt(int64(a.CredentialStatusRevocationNonce)),
 		CredentialStatusID:  credentialStatusID,
 		CredentialSubjectID: credentialSubjetID,
