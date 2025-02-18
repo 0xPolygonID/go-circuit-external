@@ -208,12 +208,16 @@ func newQRParser(data *big.Int) (*qrParser, error) {
 }
 
 type VC struct {
-	Birthday int
-	Gender   string
-	Pincode  int
-	State    string
-	Name     string
-
+	Birthday       int
+	Gender         string
+	Pincode        int
+	State          string
+	Name           string
+	ReferenceID    string
+	House          string
+	Street         string
+	VTC            string
+	District       string
 	IssuanceDate   time.Time
 	ExpirationDate time.Time
 }
@@ -232,11 +236,16 @@ func NewVC(data *AnonAadhaarDataV2) (*VC, error) {
 	expirationDate := data.SignedTime.Add(halfYearSeconds * time.Second)
 
 	return &VC{
-		Birthday: birthday,
-		Gender:   data.Gender,
-		Pincode:  pincode,
-		State:    data.Address.State,
-		Name:     data.Name,
+		Birthday:    birthday,
+		Gender:      data.Gender,
+		Pincode:     pincode,
+		State:       data.Address.State,
+		Name:        data.Name,
+		ReferenceID: data.ReferenceID,
+		House:       data.Address.House,
+		Street:      data.Address.Street,
+		VTC:         data.Address.VTC,
+		District:    data.Address.District,
 
 		IssuanceDate:   data.SignedTime,
 		ExpirationDate: expirationDate,
@@ -244,11 +253,16 @@ func NewVC(data *AnonAadhaarDataV2) (*VC, error) {
 }
 
 type QrInputs struct {
-	Birthday *big.Int
-	Gender   *big.Int
-	Pincode  *big.Int
-	State    *big.Int
-	Name     *big.Int
+	Birthday    *big.Int
+	Gender      *big.Int
+	Pincode     *big.Int
+	State       *big.Int
+	Name        *big.Int
+	ReferenceID *big.Int
+	House       *big.Int
+	Street      *big.Int
+	VTC         *big.Int
+	District    *big.Int
 
 	IssuanceDate   *big.Int
 	ExpirationDate *big.Int
@@ -317,13 +331,38 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash(name): %w", err)
 	}
+	referenceId, ok := big.NewInt(0).SetString(data.ReferenceID, 10)
+	if !ok {
+		return nil, fmt.Errorf("failed to parse referenceID '%s': %w", data.ReferenceID, err)
+	}
+	houseHash, err := poseidon.HashBytes([]byte(data.Address.House))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash(house): %w", err)
+	}
+	streetHash, err := poseidon.HashBytes([]byte(data.Address.Street))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash(street): %w", err)
+	}
+	vtcHash, err := poseidon.HashBytes([]byte(data.Address.VTC))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash(vtc): %w", err)
+	}
+	districtHash, err := poseidon.HashBytes([]byte(data.Address.District))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash(district): %w", err)
+	}
 
 	return &QrInputs{
-		Birthday: birthday,
-		Gender:   genderHash,
-		Pincode:  big.NewInt(int64(pincode)),
-		State:    stateHash,
-		Name:     nameHash,
+		Birthday:    birthday,
+		Gender:      genderHash,
+		Pincode:     big.NewInt(int64(pincode)),
+		State:       stateHash,
+		Name:        nameHash,
+		ReferenceID: referenceId,
+		House:       houseHash,
+		Street:      streetHash,
+		VTC:         vtcHash,
+		District:    districtHash,
 
 		IssuanceDate:   issuanceDateNano,
 		ExpirationDate: expirationDateNano,
