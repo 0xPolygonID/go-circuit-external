@@ -10,14 +10,6 @@ import (
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
-func reverseBytes(data []byte) []byte {
-	reversed := make([]byte, len(data))
-	for i := range data {
-		reversed[i] = data[len(data)-1-i]
-	}
-	return reversed
-}
-
 // golang implementation of the splitToWords from AnonAadhaar utils
 // https://github.com/anon-aadhaar/anon-aadhaar/blob/e0cbde3d8e4a3969a6e44a2999ec539439e61d58/packages/core/src/utils.ts#L21
 func splitToWords(number, wordsize, numberElement *big.Int) ([]*big.Int, error) {

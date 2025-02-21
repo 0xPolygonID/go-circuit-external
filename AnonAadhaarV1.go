@@ -84,7 +84,8 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 			"referenceID": vcpayload.ReferenceID,
 		},
 		CredentialStatus: &verifiable.CredentialStatus{
-			ID:              a.CredentialStatusID,
+			ID: a.CredentialStatusID,
+			//nolint:gosec // this is a nonce
 			RevocationNonce: uint64(a.CredentialStatusRevocationNonce),
 			Type:            "Iden3OnchainSparseMerkleTreeProof2023",
 		},

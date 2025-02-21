@@ -157,6 +157,7 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	if err != nil {
 		return fmt.Errorf("failed to create zlib/gzip reader: %w", err)
 	}
+	//nolint:errcheck // ignore error
 	defer r.Close()
 	uncompressedData, err := io.ReadAll(r)
 	if err != nil {
@@ -323,7 +324,7 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash(name): %w", err)
 	}
-	referenceId, ok := big.NewInt(0).SetString(data.ReferenceID, 10)
+	referenceID, ok := big.NewInt(0).SetString(data.ReferenceID, 10)
 	if !ok {
 		return nil, fmt.Errorf("failed to parse referenceID '%s': %w", data.ReferenceID, err)
 	}
@@ -333,7 +334,7 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 		Birthday:    birthday,
 		Gender:      genderHash,
 		Name:        nameHash,
-		ReferenceID: referenceId,
+		ReferenceID: referenceID,
 
 		IssuanceDate:   issuanceDateNano,
 		ExpirationDate: expirationDateNano,
