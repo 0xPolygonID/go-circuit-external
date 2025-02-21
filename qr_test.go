@@ -62,6 +62,11 @@ func TestQRData(t *testing.T) {
 	assert.Equal(t, expected["SubDistrict"], actual.Address.SubDistrict, "SubDistrict mismatch")
 	assert.Equal(t, expected["VTC"], actual.Address.VTC, "VTC mismatch")
 	assert.Equal(t, expected["PhoneNumberLast4"], actual.MobileLastDigits, "MobileLastDigits mismatch")
+	assert.Equal(t, expected["PhoneNumberLast4"], actual.MobileLastDigits, "MobileLastDigits mismatch")
+	assert.Equal(t,
+		"C/O Ishwar Chand East Delhi  B-31, 3rd Floor  110051 Krishna Nagar Delhi Radhey Shyam Park Extension Gandhi Nagar Krishna Nagar",
+		actual.Address.String(),
+		"Address mismatch")
 }
 
 func TestNewQRInputs(t *testing.T) {

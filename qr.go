@@ -2,13 +2,14 @@ package gocircuitexternal
 
 import (
 	"bytes"
+	"compress/gzip"
 	"compress/zlib"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"math/big"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/iden3/go-iden3-crypto/poseidon"
@@ -79,6 +80,23 @@ type Address struct {
 	VTC         string `json:"vtc"`
 }
 
+func (a *Address) String() string {
+	const delimiter = " "
+	return strings.Join([]string{
+		a.CareOf,
+		a.District,
+		a.Landmark,
+		a.House,
+		a.Location,
+		a.PinCode,
+		a.PostOffice,
+		a.State,
+		a.Street,
+		a.SubDistrict,
+		a.VTC,
+	}, delimiter)
+}
+
 // AnonAadhaarDataV2 is a struct that represents the data that is stored in Aadhaar QR code
 // https://github.com/zkspecs/zkspecs/blob/main/specs/2/README.md
 type AnonAadhaarDataV2 struct {
@@ -98,11 +116,20 @@ type AnonAadhaarDataV2 struct {
 	signature []byte
 }
 
+func createDecompressor(data []byte) (io.ReadCloser, error) {
+	copied := make([]byte, len(data))
+	if c := copy(copied, data); c != len(data) {
+		return nil, fmt.Errorf("failed to copy data: %d", c)
+	}
+	zr, err := zlib.NewReader(bytes.NewReader(copied))
+	if err != nil {
+		return gzip.NewReader(bytes.NewReader(copied))
+	}
+	return zr, nil
+}
+
 // verify check formats
 func (a *AnonAadhaarDataV2) verify() error {
-	if a.Version != supportedQRDataVersion {
-		return fmt.Errorf("unsupported version of QR data: %s", a.Version)
-	}
 	if a.SignedTime.IsZero() {
 		return errors.New("signed time is not set")
 	}
@@ -126,16 +153,14 @@ func (a *AnonAadhaarDataV2) verify() error {
 }
 
 func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
-	r, err := zlib.NewReader(bytes.NewReader(data.Bytes()))
+	r, err := createDecompressor(data.Bytes())
 	if err != nil {
-		return fmt.Errorf("failed to create zlib reader: %w", err)
+		return fmt.Errorf("failed to create zlib/gzip reader: %w", err)
 	}
+	defer r.Close()
 	uncompressedData, err := io.ReadAll(r)
 	if err != nil {
 		return fmt.Errorf("failed to read compressed data: %w", err)
-	}
-	if err = r.Close(); err != nil {
-		return fmt.Errorf("failed to close zlib reader: %w", err)
 	}
 
 	a.signature = uncompressedData[len(uncompressedData)-256:]
@@ -180,6 +205,16 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 		(bytes.Join(photo, []byte{delimiter})),
 	)
 
+	var delimiterIndices []int
+	for i, b := range a.rawdata {
+		if b == 255 {
+			delimiterIndices = append(delimiterIndices, i)
+		}
+		if len(delimiterIndices) == 18 {
+			break
+		}
+	}
+
 	if err = a.verify(); err != nil {
 		return fmt.Errorf("failed to unmarshal from QR: %w", err)
 	}
@@ -187,37 +222,12 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	return nil
 }
 
-type qrParser struct {
-	uncompressedData []byte
-}
-
-func newQRParser(data *big.Int) (*qrParser, error) {
-	r, err := zlib.NewReader(bytes.NewReader(data.Bytes()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create zlib reader: %w", err)
-	}
-	uncompressedData, err := io.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read compressed, data: %w", err)
-	}
-	if err = r.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close zlib reader: %w", err)
-	}
-
-	return &qrParser{uncompressedData}, nil
-}
-
 type VC struct {
+	Address        string
 	Birthday       int
 	Gender         string
-	Pincode        int
-	State          string
 	Name           string
 	ReferenceID    string
-	House          string
-	Street         string
-	VTC            string
-	District       string
 	IssuanceDate   time.Time
 	ExpirationDate time.Time
 }
@@ -229,23 +239,14 @@ func NewVC(data *AnonAadhaarDataV2) (*VC, error) {
 
 	t, _ := time.Parse("01-02-2006", data.DateOfBirth)
 	birthday := t.Year()*10000 + int(t.Month())*100 + t.Day()
-	pincode, err := strconv.Atoi(data.Address.PinCode)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse pincode '%s': %w", data.Address.PinCode, err)
-	}
 	expirationDate := data.SignedTime.Add(halfYearSeconds * time.Second)
 
 	return &VC{
+		Address:     data.Address.String(),
 		Birthday:    birthday,
 		Gender:      data.Gender,
-		Pincode:     pincode,
-		State:       data.Address.State,
 		Name:        data.Name,
 		ReferenceID: data.ReferenceID,
-		House:       data.Address.House,
-		Street:      data.Address.Street,
-		VTC:         data.Address.VTC,
-		District:    data.Address.District,
 
 		IssuanceDate:   data.SignedTime,
 		ExpirationDate: expirationDate,
@@ -253,16 +254,11 @@ func NewVC(data *AnonAadhaarDataV2) (*VC, error) {
 }
 
 type QrInputs struct {
+	Address     *big.Int
 	Birthday    *big.Int
 	Gender      *big.Int
-	Pincode     *big.Int
-	State       *big.Int
 	Name        *big.Int
 	ReferenceID *big.Int
-	House       *big.Int
-	Street      *big.Int
-	VTC         *big.Int
-	District    *big.Int
 
 	IssuanceDate   *big.Int
 	ExpirationDate *big.Int
@@ -282,10 +278,6 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 	birthday := big.NewInt(
 		int64(t.Year()*10000 + int(t.Month())*100 + t.Day()),
 	)
-	pincode, err := strconv.Atoi(data.Address.PinCode)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse pincode '%s': %w", data.Address.PinCode, err)
-	}
 
 	expirationDate := data.SignedTime.Add(halfYearSeconds * time.Second)
 	issuanceDateNano := new(big.Int).Mul(
@@ -319,13 +311,13 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 		return nil, fmt.Errorf("failed to split signature: %w", err)
 	}
 
+	addressHash, err := poseidon.HashBytes([]byte(data.Address.String()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash(address): %w", err)
+	}
 	genderHash, err := poseidon.HashBytes([]byte(data.Gender))
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash(gender): %w", err)
-	}
-	stateHash, err := poseidon.HashBytes([]byte(data.Address.State))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash(state): %w", err)
 	}
 	nameHash, err := poseidon.HashBytes([]byte(data.Name))
 	if err != nil {
@@ -335,34 +327,13 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 	if !ok {
 		return nil, fmt.Errorf("failed to parse referenceID '%s': %w", data.ReferenceID, err)
 	}
-	houseHash, err := poseidon.HashBytes([]byte(data.Address.House))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash(house): %w", err)
-	}
-	streetHash, err := poseidon.HashBytes([]byte(data.Address.Street))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash(street): %w", err)
-	}
-	vtcHash, err := poseidon.HashBytes([]byte(data.Address.VTC))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash(vtc): %w", err)
-	}
-	districtHash, err := poseidon.HashBytes([]byte(data.Address.District))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash(district): %w", err)
-	}
 
 	return &QrInputs{
+		Address:     addressHash,
 		Birthday:    birthday,
 		Gender:      genderHash,
-		Pincode:     big.NewInt(int64(pincode)),
-		State:       stateHash,
 		Name:        nameHash,
 		ReferenceID: referenceId,
-		House:       houseHash,
-		Street:      streetHash,
-		VTC:         vtcHash,
-		District:    districtHash,
 
 		IssuanceDate:   issuanceDateNano,
 		ExpirationDate: expirationDateNano,
@@ -372,31 +343,6 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 		DelimiterIndices: delimiterIndices,
 		Signature:        toString(signatureParts),
 	}, nil
-}
-
-func (q *qrParser) payload() (
-	dataPadded []byte,
-	dataPaddedLen int,
-	delimiterIndices []int,
-	signature *big.Int,
-	err error,
-) {
-	signature = big.NewInt(0).SetBytes(q.uncompressedData[len(q.uncompressedData)-256:])
-	signetData := q.uncompressedData[:len(q.uncompressedData)-256]
-	dataPadded, dataPaddedLen, err = sha256Pad(signetData, 512*3)
-	if err != nil {
-		return
-	}
-
-	for i, b := range signetData {
-		if b == 255 {
-			delimiterIndices = append(delimiterIndices, i)
-		}
-		if len(delimiterIndices) == 18 {
-			break
-		}
-	}
-	return dataPadded, dataPaddedLen, delimiterIndices, signature, nil
 }
 
 // golang implementation of sha256Pad from zk-email helpers

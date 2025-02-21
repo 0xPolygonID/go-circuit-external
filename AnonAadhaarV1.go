@@ -66,7 +66,7 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		Context: []string{
 			"https://www.w3.org/2018/credentials/v1",
 			"https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
-			"ipfs://QmQvtq9ZYQ288etj2SkFyYtADt5DY77ZTjUz6xFVjoPzhU",
+			"ipfs://QmbtrBk64KmdD571GTYsUgqVPrvNVuUf8sw8CkLszjyPfk",
 		},
 		Type: []string{
 			"VerifiableCredential",
@@ -75,18 +75,13 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		IssuanceDate: &vcpayload.IssuanceDate,
 		Expiration:   &vcpayload.ExpirationDate,
 		CredentialSubject: map[string]interface{}{
+			"address":     vcpayload.Address,
 			"dateOfBirth": vcpayload.Birthday,
 			"gender":      vcpayload.Gender,
 			"id":          a.CredentialSubjectID,
-			"pinCode":     vcpayload.Pincode,
-			"state":       vcpayload.State,
 			"name":        vcpayload.Name,
 			"type":        "AnonAadhaar",
 			"referenceID": vcpayload.ReferenceID,
-			"house":       vcpayload.House,
-			"street":      vcpayload.Street,
-			"VTC":         vcpayload.VTC,
-			"district":    vcpayload.District,
 		},
 		CredentialStatus: &verifiable.CredentialStatus{
 			ID:              a.CredentialStatusID,
@@ -95,7 +90,7 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		},
 		Issuer: a.IssuerID,
 		CredentialSchema: verifiable.CredentialSchema{
-			ID:   "ipfs://QmQmC2zQSuRWQgubK1tFG1uz4mVoiY3LYha1d5g1BPwfMq",
+			ID:   "ipfs://QmSvcvpYSvBZPmBtetPNJ489mByFCr1DgknpQkMwH4PK3x",
 			Type: "JsonSchema2023",
 		},
 	}, nil
@@ -150,16 +145,11 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 	}
 
 	proofs, err := mt.update(updateValues{
+		Address:             qrInputs.Address,
 		Birthday:            qrInputs.Birthday,
 		Gender:              qrInputs.Gender,
-		Pincode:             qrInputs.Pincode,
-		State:               qrInputs.State,
 		Name:                qrInputs.Name,
 		ReferenceID:         qrInputs.ReferenceID,
-		House:               qrInputs.House,
-		Street:              qrInputs.Street,
-		VTC:                 qrInputs.VTC,
-		District:            qrInputs.District,
 		RevocationNonce:     big.NewInt(int64(a.CredentialStatusRevocationNonce)),
 		CredentialStatusID:  credentialStatusID,
 		CredentialSubjectID: credentialSubjetID,

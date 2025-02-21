@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/iden3/go-circuits/v2 v2.4.0
 	github.com/iden3/go-iden3-core/v2 v2.3.1
+	github.com/iden3/go-iden3-crypto v0.0.17
 	github.com/iden3/go-merkletree-sql/v2 v2.0.6
 	github.com/iden3/go-schema-processor/v2 v2.6.1
 	github.com/lestrrat-go/jwx/v3 v3.0.0-alpha1
@@ -19,7 +20,6 @@ require (
 	github.com/dchest/blake512 v1.0.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
-	github.com/iden3/go-iden3-crypto v0.0.17 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
