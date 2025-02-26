@@ -15,6 +15,8 @@ import (
 	"github.com/iden3/go-iden3-crypto/poseidon"
 )
 
+const timeTemplate = "02-01-2006" // DD-MM-YYYY regarding to Indian format of date
+
 type GenderString string
 
 const (
@@ -133,7 +135,7 @@ func (a *AnonAadhaarDataV2) verify() error {
 	if a.SignedTime.IsZero() {
 		return errors.New("signed time is not set")
 	}
-	_, err := time.Parse("01-02-2006", a.DateOfBirth) // DD-MM-YYYY check data format
+	_, err := time.Parse(timeTemplate, a.DateOfBirth) // DD-MM-YYYY check data format
 	if err != nil {
 		return fmt.Errorf("failed to parse date of birth '%s': %w", a.DateOfBirth, err)
 	}
@@ -238,7 +240,7 @@ func NewVC(data *AnonAadhaarDataV2) (*VC, error) {
 		return nil, fmt.Errorf("failed to verify data: %w", err)
 	}
 
-	t, _ := time.Parse("01-02-2006", data.DateOfBirth)
+	t, _ := time.Parse(timeTemplate, data.DateOfBirth)
 	birthday := t.Year()*10000 + int(t.Month())*100 + t.Day()
 	expirationDate := data.SignedTime.Add(halfYearSeconds * time.Second)
 
@@ -275,7 +277,7 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 		return nil, fmt.Errorf("failed to verify data: %w", err)
 	}
 
-	t, _ := time.Parse("01-02-2006", data.DateOfBirth)
+	t, _ := time.Parse(timeTemplate, data.DateOfBirth)
 	birthday := big.NewInt(
 		int64(t.Year()*10000 + int(t.Month())*100 + t.Day()),
 	)
