@@ -15,6 +15,7 @@ func TestW3CCredential(t *testing.T) {
 
 	inputs := PassportV1Inputs{
 		PassportData:                    mrzToDg1("P<UKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035<<<<<<<<<<<<<<02"),
+		DG2Hash:                         "88328f6e5066315192a573911a6f33081da50fd51397af13edb3d7badbb59f98",
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: 0,
@@ -39,6 +40,7 @@ func TestInputsMarshal(t *testing.T) {
 
 	inputs := PassportV1Inputs{
 		PassportData:                    mrzToDg1("P<UKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035<<<<<<<<<<<<<<02"),
+		DG2Hash:                         "88328f6e5066315192a573911a6f33081da50fd51397af13edb3d7badbb59f98",
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: 0,

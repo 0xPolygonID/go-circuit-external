@@ -18,6 +18,9 @@ import (
 
 const (
 	PassportV1 circuits.CircuitID = "passportV1"
+
+	passportJSONLD = "ipfs://QmZbsTnRwtCmbdg3r9o7Txid37LmvPcvmzVi1Abvqu1WKL"
+	passportSchema = "ipfs://QmTojMfyzxehCJVw7aUrdWuxdF68R7oLYooGHCUr9wwsef"
 )
 
 // FormatDate formats date to 8 digits format
@@ -31,6 +34,7 @@ func formatDate(date int, currentDate int) int {
 
 type PassportV1Inputs struct {
 	PassportData string `json:"passportData"`
+	DG2Hash      string `json:"dg2Hash"`
 	// Generated on mobile app values
 	CredentialSubjectID             string `json:"credentialSubjectID"`             // credentialSubject.id
 	CredentialStatusRevocationNonce int    `json:"credentialStatusRevocationNonce"` // credentialStatus.revocationNonce
@@ -43,6 +47,7 @@ type PassportV1Inputs struct {
 
 type anonAadhaarV1CircuitInputs struct {
 	DG1                 []int      `json:"dg1"`
+	DG2Hash             []int      `json:"dg2Hash"`
 	LastNameSize        int        `json:"lastNameSize"`
 	FirstNameSize       int        `json:"firstNameSize"`
 	CurrentDate         string     `json:"currentDate"` // format: YYMMDD
@@ -96,7 +101,7 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 		Context: []string{
 			"https://www.w3.org/2018/credentials/v1",
 			"https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
-			"ipfs://QmbbizDVuzyhdqbUUk534tUKxEgxVg21QbRXZNpoNBXvcj",
+			passportJSONLD,
 		},
 		Type: []string{
 			"VerifiableCredential",
@@ -109,12 +114,15 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 			"documentExpirationDate":   20000000 + expiryInt, // TODO (illia-korotia): fix in correct way
 			"firstName":                dg1.FirstName,
 			"fullName":                 dg1.FullName,
-			"govermentIdentifier":      dg1.DocumentNumber,
+			"governmentIdentifier":     dg1.DocumentNumber,
 			"governmentIdentifierType": dg1.DocumentType,
 			"sex":                      dg1.Sex,
 			"nationalities": map[string]interface{}{
-				"nationality1CountryCode": dg1.Nationality, // TODO (illia-korotia): I'm not sure that is correct // 9656117739891539357123771284552289598577388060024608839018723118201732735699
+				"nationality1CountryCode": dg1.Nationality,
 				"nationality2CountryCode": dg1.IssuingCountry,
+			},
+			"customFields": map[string]interface{}{
+				"string3": a.DG2Hash,
 			},
 			"id":   a.CredentialSubjectID,
 			"type": "BasicPerson",
@@ -127,7 +135,7 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 		},
 		Issuer: a.IssuerID,
 		CredentialSchema: verifiable.CredentialSchema{
-			ID:   "ipfs://QmR7gqw4MKRLH8XSb75LkQuNAjoKhR3kZAb1A3g7CBRE3M",
+			ID:   passportSchema,
 			Type: "JsonSchema2023",
 		},
 	}, nil
@@ -219,6 +227,11 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 		return nil, fmt.Errorf("failed to hash govermentIdentifierType: %w", err)
 	}
 
+	dg2HashHash, err := hashvalue(a.DG2Hash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash dg2Hash: %w", err)
+	}
+
 	sexHash, err := hashvalue(string(dg1.Sex))
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash sex: %w", err)
@@ -253,6 +266,9 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 
 		Nationality:    notionalityHash,
 		IssuingCountry: issuingCountryHash,
+
+		// Poseidon16([]bytes(Hex(ShaX(Dg2))))
+		Dg2Hash: dg2HashHash,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update template tree: %w", err)
@@ -271,6 +287,7 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 
 	inputs := anonAadhaarV1CircuitInputs{
 		DG1:           toIntsArray(dg1.Raw),
+		DG2Hash:       toIntsArray([]byte(a.DG2Hash)),
 		LastNameSize:  len(dg1.FullName),
 		FirstNameSize: len(dg1.FirstName),
 		CurrentDate:   timeNow.Format("060102"),
