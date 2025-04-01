@@ -21,6 +21,8 @@ const (
 
 	passportJSONLD = "ipfs://QmZbsTnRwtCmbdg3r9o7Txid37LmvPcvmzVi1Abvqu1WKL"
 	passportSchema = "ipfs://QmTojMfyzxehCJVw7aUrdWuxdF68R7oLYooGHCUr9wwsef"
+
+	circomYearSeconds = 31536000
 )
 
 // FormatDate formats date to 8 digits format
@@ -62,6 +64,14 @@ type anonAadhaarV1CircuitInputs struct {
 	Siblings            [][]string `json:"siblings"`
 }
 
+func defineExpirationDate(passportExpirationDate time.Time, currentDate time.Time) time.Time {
+	diff := passportExpirationDate.Sub(currentDate)
+	if diff.Seconds() < 31536000 {
+		return passportExpirationDate
+	}
+	return currentDate.Add(circomYearSeconds * time.Second)
+}
+
 func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 	dg1, err := ParseDG1(a.PassportData)
 	if err != nil {
@@ -91,11 +101,13 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 	if expiryInt < timeNowInt {
 		return nil, fmt.Errorf("passport is expired")
 	}
+	expiryInt = 20000000 + expiryInt
+
 	expiryTime, err := time.Parse("20060102", "20"+dg1.DateOfExpiry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse expiry date: %w", err)
 	}
-	expiryTime = expiryTime.UTC()
+	expiryTime = defineExpirationDate(expiryTime, timeNow)
 	return &verifiable.W3CCredential{
 		ID: fmt.Sprintf("urn:uuid:%s", uuid.New().String()),
 		Context: []string{
@@ -111,7 +123,7 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 		Expiration:   &expiryTime,
 		CredentialSubject: map[string]interface{}{
 			"dateOfBirth":              dobFormatted,
-			"documentExpirationDate":   20000000 + expiryInt, // TODO (illia-korotia): fix in correct way
+			"documentExpirationDate":   expiryInt, // TODO (illia-korotia): fix in correct way
 			"firstName":                dg1.FirstName,
 			"fullName":                 dg1.FullName,
 			"governmentIdentifier":     dg1.DocumentNumber,
@@ -206,7 +218,7 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse expiry date: %w", err)
 	}
-	expiryTimeUnixNano := expiryTime.UTC().UnixNano()
+	expiryTime = defineExpirationDate(expiryTime, timeNow)
 
 	firstNameHash, err := hashvalue(dg1.FirstName)
 	if err != nil {
@@ -259,9 +271,9 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 		RevocationNonce:     big.NewInt(int64(a.CredentialStatusRevocationNonce)),
 		CredentialStatusID:  credentialStatusID,
 		CredentialSubjectID: credentialSubjetID,
-		ExpirationDate:      big.NewInt(expiryTimeUnixNano), // Timestamp is seconds because the circuit will multiply it by miliseconds
+		ExpirationDate:      big.NewInt(expiryTime.UTC().UnixNano()), // Timestamp is seconds because the circuit will multiply it by miliseconds
 		// TODO (illia-korotia): will is work on js? Do we need to have it in UnixNano?
-		IssuanceDate: big.NewInt(timeNow.UnixNano()), // TODO (illia-korotia): check how Oleg do this format
+		IssuanceDate: big.NewInt(timeNow.UTC().UnixNano()), // TODO (illia-korotia): check how Oleg do this format
 		Issuer:       issuer,
 
 		Nationality:    notionalityHash,
@@ -297,7 +309,7 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 		CredentialSubjectID: credentialSubjetID.String(),
 		UserID:              userID.BigInt().String(),
 		Issuer:              issuer.String(),
-		IssuanceDate:        big.NewInt(timeNow.UnixNano()),
+		IssuanceDate:        big.NewInt(timeNow.UTC().Unix()),
 
 		LinkNonce:    a.LinkNonce,
 		TemplateRoot: templateRoot.String(),
