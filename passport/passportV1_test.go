@@ -2,7 +2,7 @@ package passport
 
 import (
 	"encoding/json"
-	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -10,6 +10,49 @@ import (
 )
 
 func TestW3CCredential(t *testing.T) {
+	//nolint:gosec // Test data
+	expectedCredential := `{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
+    "ipfs://QmZbsTnRwtCmbdg3r9o7Txid37LmvPcvmzVi1Abvqu1WKL"
+  ],
+  "type": [
+    "VerifiableCredential",
+    "BasicPerson"
+  ],
+  "expirationDate": "2026-03-21T17:28:52Z",
+  "issuanceDate": "2025-03-21T17:28:52Z",
+  "credentialSubject": {
+    "customFields": {
+      "string3": "88328f6e5066315192a573911a6f33081da50fd51397af13edb3d7badbb59f98"
+    },
+    "dateOfBirth": 19960309,
+    "documentExpirationDate": 20350803,
+    "firstName": "VALERIY",
+    "fullName": "KUZNETSOV",
+    "governmentIdentifier": "AC1234567",
+    "governmentIdentifierType": "P",
+    "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
+    "nationalities": {
+      "nationality1CountryCode": "UKR",
+      "nationality2CountryCode": "UKR"
+    },
+    "sex": "M",
+    "type": "BasicPerson"
+  },
+  "credentialStatus": {
+    "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2\u0026state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+    "type": "Iden3OnchainSparseMerkleTreeProof2023",
+    "revocationNonce": 0
+  },
+  "issuer": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
+  "credentialSchema": {
+    "id": "ipfs://QmTojMfyzxehCJVw7aUrdWuxdF68R7oLYooGHCUr9wwsef",
+    "type": "JsonSchema2023"
+  }
+}`
+
 	issuanceDate, err := time.Parse(time.RFC3339Nano, "2025-03-21T17:28:52.201289Z")
 	require.NoError(t, err)
 
@@ -23,15 +66,14 @@ func TestW3CCredential(t *testing.T) {
 		IssuanceDate:                    issuanceDate.UTC().Unix(),
 		LinkNonce:                       "1",
 	}
-	jsonInputs, err := json.Marshal(inputs)
-	require.NoError(t, err)
-	fmt.Println(string(jsonInputs))
 
 	credential, err := inputs.W3CCredential()
 	require.NoError(t, err)
-	b, err := json.MarshalIndent(credential, "", "  ")
+	credential.ID = ""
+	actualCredential, err := json.Marshal(credential)
 	require.NoError(t, err)
-	fmt.Println(string(b))
+
+	require.JSONEq(t, expectedCredential, string(actualCredential))
 }
 
 func TestInputsMarshal(t *testing.T) {
@@ -51,38 +93,27 @@ func TestInputsMarshal(t *testing.T) {
 
 	inputsCircuit, err := inputs.InputsMarshal()
 	require.NoError(t, err)
-	fmt.Println(string(inputsCircuit))
+	expectedInputs, err := os.ReadFile("./testdata/inputs.json")
+	require.NoError(t, err)
+	require.JSONEq(t, string(expectedInputs), string(inputsCircuit))
 }
 
 func TestInputsUnmarshal(t *testing.T) {
-	publicOutputs := []string{
-		"12343105779965610540047025345938704312955329035594806470260411576419571786879",
-		"14193146200435563417722817655626671239476419932450502386457224894805250323461",
-		"16124395655319932562687594154333620461512120815155591900166934828565073655159",
-		"779590574833975594150553032190316165100034337907701477766077549696170325957",
-		"3286800018689036072036595048281161368331306321215602580795106602635276597696",
-		"14193146200435563417722817655626671239476419932450502386457224894805250323461",
-		"19960309",
-		"4366613503740245542741816499068547859478657796760861141829344679607332353738",
-		"20350803",
-		"6632588972401112452204984525927531300077823504377975214483036229186777300654",
-		"20661880459224054680311568334655353588113926319608771155576598304028828385849",
-		"17688680066341107134455191079814377222217258245657465909100070052329567309045",
-		"250321",
-		"1742578132000000000",
-		"1032673590281623375551861967557659243242098504285449195937994191670285259560",
+	publicInputs, err := os.ReadFile("./testdata/outputs.json")
+	require.NoError(t, err)
+
+	signals := &PassportV1PubSignals{}
+	err = signals.PubSignalsUnmarshal(publicInputs)
+	require.NoError(t, err)
+
+	expected := PassportV1PubSignals{
+		HashIndex:    "17776132232384982104536185118045964364857471284992795983125459099864510185953",
+		HashValue:    "20008859012517445819901041236908823100073815023181291226591238728478957482360",
+		LinkID:       "2532529201520842754671271788005039166945285509607346705285362964561400144174",
+		CurrentDate:  "250321",
+		IssuanceDate: "1742578132",
+		TemplateRoot: "11355012832755671330307538002239263753806804904003813746452342893352381210514",
 	}
-	jsonPublicOutputs, err := json.Marshal(publicOutputs)
-	require.NoError(t, err)
 
-	expected := PassportV1PubSignals{}
-	err = expected.PubSignalsUnmarshal(jsonPublicOutputs)
-	require.NoError(t, err)
-
-	require.Equal(t, expected.HashIndex, publicOutputs[9])
-	require.Equal(t, expected.HashValue, publicOutputs[10])
-	require.Equal(t, expected.LinkId, publicOutputs[11])
-	require.Equal(t, expected.CurrentDate, publicOutputs[12])
-	require.Equal(t, expected.IssuanceDate, publicOutputs[13])
-	require.Equal(t, expected.TemplateRoot, publicOutputs[14])
+	require.Equal(t, expected, *signals)
 }

@@ -17,13 +17,20 @@ import (
 )
 
 const (
-	CredentialSHA1   = "credential_sha1"
+	//nolint:gosec // This is names of algorithms
+	CredentialSHA1 = "credential_sha1"
+	//nolint:gosec // This is names of algorithms
 	CredentialSHA224 = "credential_sha224"
+	//nolint:gosec // This is names of algorithms
 	CredentialSHA256 = "credential_sha256"
+	//nolint:gosec // This is names of algorithms
 	CredentialSHA384 = "credential_sha384"
+	//nolint:gosec // This is names of algorithms
 	CredentialSHA512 = "credential_sha512"
 
+	//nolint:gosec // Passport JSON-LD
 	passportJSONLD = "ipfs://QmZbsTnRwtCmbdg3r9o7Txid37LmvPcvmzVi1Abvqu1WKL"
+	//nolint:gosec // This is names of algorithms
 	passportSchema = "ipfs://QmTojMfyzxehCJVw7aUrdWuxdF68R7oLYooGHCUr9wwsef"
 
 	circomYearSeconds = 31536000
@@ -31,7 +38,7 @@ const (
 
 // FormatDate formats date to 8 digits format
 // TODO (illia-korotia): Test each case with the same data here and in the circuit
-func formatDate(date int, currentDate int) int {
+func formatDate(date, currentDate int) int {
 	if date > currentDate {
 		return 19000000 + date
 	}
@@ -68,7 +75,7 @@ type anonAadhaarV1CircuitInputs struct {
 	Siblings            [][]string `json:"siblings"`
 }
 
-func defineExpirationDate(passportExpirationDate time.Time, currentDate time.Time) time.Time {
+func defineExpirationDate(passportExpirationDate, currentDate time.Time) time.Time {
 	diff := passportExpirationDate.Sub(currentDate)
 	if diff.Seconds() < 31536000 {
 		return passportExpirationDate
@@ -82,7 +89,7 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 		return nil, fmt.Errorf("failed to parse DG1: %w", err)
 	}
 
-	timeNow := time.Unix(int64(a.IssuanceDate), 0).UTC()
+	timeNow := time.Unix(a.IssuanceDate, 0).UTC()
 	timeNowInt, err := strconv.Atoi(
 		timeNow.Format("060102"),
 	)
@@ -123,7 +130,7 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 			"VerifiableCredential",
 			"BasicPerson",
 		},
-		IssuanceDate: &timeNow, // TOOD (illia-korotia): should we have it in UnixNano?
+		IssuanceDate: &timeNow, // TODO (illia-korotia): should we have it in UnixNano?
 		Expiration:   &expiryTime,
 		CredentialSubject: map[string]interface{}{
 			"dateOfBirth":              dobFormatted,
@@ -189,13 +196,10 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse DG1: %w", err)
 	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse DG1: %w", err)
-	}
 
 	// TODO (illia-korotia): how to refactor these blocks of code?
 	// To not duplicate these code
-	timeNow := time.Unix(int64(a.IssuanceDate), 0)
+	timeNow := time.Unix(a.IssuanceDate, 0)
 	timeNow = timeNow.UTC()
 	timeNowInt, err := strconv.Atoi(
 		timeNow.Format("060102"),
@@ -353,7 +357,7 @@ func hashvalue(v interface{}) (*big.Int, error) {
 type PassportV1PubSignals struct {
 	HashIndex    string `json:"hashIndex"`
 	HashValue    string `json:"hashValue"`
-	LinkId       string `json:"linkId"`
+	LinkID       string `json:"linkId"`
 	CurrentDate  string `json:"currentDate"`
 	IssuanceDate string `json:"issuanceDate"`
 	TemplateRoot string `json:"templateRoot"`
@@ -383,7 +387,7 @@ func (a *PassportV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 
 	a.HashIndex = sVals[9]
 	a.HashValue = sVals[10]
-	a.LinkId = sVals[11]
+	a.LinkID = sVals[11]
 	a.CurrentDate = sVals[12]
 	a.IssuanceDate = sVals[13]
 	a.TemplateRoot = sVals[14]
