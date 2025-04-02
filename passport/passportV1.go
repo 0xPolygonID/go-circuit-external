@@ -17,7 +17,11 @@ import (
 )
 
 const (
-	PassportV1 circuits.CircuitID = "passportV1"
+	CredentialSHA1   = "credential_sha1"
+	CredentialSHA224 = "credential_sha224"
+	CredentialSHA256 = "credential_sha256"
+	CredentialSHA384 = "credential_sha384"
+	CredentialSHA512 = "credential_sha512"
 
 	passportJSONLD = "ipfs://QmZbsTnRwtCmbdg3r9o7Txid37LmvPcvmzVi1Abvqu1WKL"
 	passportSchema = "ipfs://QmTojMfyzxehCJVw7aUrdWuxdF68R7oLYooGHCUr9wwsef"
