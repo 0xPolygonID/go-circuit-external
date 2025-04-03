@@ -47,7 +47,6 @@ func formatDate(date, currentDate int) int {
 
 type PassportV1Inputs struct {
 	PassportData string `json:"passportData"`
-	DG2Hash      string `json:"dg2Hash"`
 	// Generated on mobile app values
 	CredentialSubjectID             string `json:"credentialSubjectID"`             // credentialSubject.id
 	CredentialStatusRevocationNonce int    `json:"credentialStatusRevocationNonce"` // credentialStatus.revocationNonce
@@ -60,7 +59,6 @@ type PassportV1Inputs struct {
 
 type anonAadhaarV1CircuitInputs struct {
 	DG1                 []int      `json:"dg1"`
-	DG2Hash             []int      `json:"dg2Hash"`
 	LastNameSize        int        `json:"lastNameSize"`
 	FirstNameSize       int        `json:"firstNameSize"`
 	CurrentDate         string     `json:"currentDate"` // format: YYMMDD
@@ -143,9 +141,6 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 			"nationalities": map[string]interface{}{
 				"nationality1CountryCode": dg1.Nationality,
 				"nationality2CountryCode": dg1.IssuingCountry,
-			},
-			"customFields": map[string]interface{}{
-				"string3": a.DG2Hash,
 			},
 			"id":   a.CredentialSubjectID,
 			"type": "BasicPerson",
@@ -247,11 +242,6 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 		return nil, fmt.Errorf("failed to hash govermentIdentifierType: %w", err)
 	}
 
-	dg2HashHash, err := hashvalue(a.DG2Hash)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash dg2Hash: %w", err)
-	}
-
 	sexHash, err := hashvalue(string(dg1.Sex))
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash sex: %w", err)
@@ -286,9 +276,6 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 
 		Nationality:    notionalityHash,
 		IssuingCountry: issuingCountryHash,
-
-		// Poseidon16([]bytes(Hex(ShaX(Dg2))))
-		Dg2Hash: dg2HashHash,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update template tree: %w", err)
@@ -307,7 +294,6 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 
 	inputs := anonAadhaarV1CircuitInputs{
 		DG1:           toIntsArray(dg1.Raw),
-		DG2Hash:       toIntsArray([]byte(a.DG2Hash)),
 		LastNameSize:  len(dg1.FullName),
 		FirstNameSize: len(dg1.FirstName),
 		CurrentDate:   timeNow.Format("060102"),
@@ -366,14 +352,14 @@ type PassportV1PubSignals struct {
 // PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals
 func (a *PassportV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// expected order:
-	// hashIndex - 9
-	// hashValue - 10
-	// linkId - 11
-	// currentDate - 12
-	// issuanceDate - 13
-	// templateRoot - 14
+	// hashIndex - 1
+	// hashValue - 2
+	// linkId - 3
+	// currentDate - 4
+	// issuanceDate - 5
+	// templateRoot - 6
 
-	const fieldLength = 15
+	const fieldLength = 6
 
 	var sVals []string
 	err := json.Unmarshal(data, &sVals)
@@ -385,12 +371,12 @@ func (a *PassportV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 		return fmt.Errorf("expected %d values, got %d", fieldLength, len(sVals))
 	}
 
-	a.HashIndex = sVals[9]
-	a.HashValue = sVals[10]
-	a.LinkID = sVals[11]
-	a.CurrentDate = sVals[12]
-	a.IssuanceDate = sVals[13]
-	a.TemplateRoot = sVals[14]
+	a.HashIndex = sVals[0]
+	a.HashValue = sVals[1]
+	a.LinkID = sVals[2]
+	a.CurrentDate = sVals[3]
+	a.IssuanceDate = sVals[4]
+	a.TemplateRoot = sVals[5]
 
 	return nil
 }

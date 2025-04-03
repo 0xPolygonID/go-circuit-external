@@ -24,9 +24,6 @@ func TestW3CCredential(t *testing.T) {
   "expirationDate": "2026-03-21T17:28:52Z",
   "issuanceDate": "2025-03-21T17:28:52Z",
   "credentialSubject": {
-    "customFields": {
-      "string3": "88328f6e5066315192a573911a6f33081da50fd51397af13edb3d7badbb59f98"
-    },
     "dateOfBirth": 19960309,
     "documentExpirationDate": 20350803,
     "firstName": "VALERIY",
@@ -58,7 +55,6 @@ func TestW3CCredential(t *testing.T) {
 
 	inputs := PassportV1Inputs{
 		PassportData:                    mrzToDg1("P<UKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035<<<<<<<<<<<<<<02"),
-		DG2Hash:                         "88328f6e5066315192a573911a6f33081da50fd51397af13edb3d7badbb59f98",
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: 0,
@@ -82,7 +78,6 @@ func TestInputsMarshal(t *testing.T) {
 
 	inputs := PassportV1Inputs{
 		PassportData:                    mrzToDg1("P<UKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035<<<<<<<<<<<<<<02"),
-		DG2Hash:                         "88328f6e5066315192a573911a6f33081da50fd51397af13edb3d7badbb59f98",
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: 0,
@@ -107,12 +102,12 @@ func TestInputsUnmarshal(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := PassportV1PubSignals{
-		HashIndex:    "17776132232384982104536185118045964364857471284992795983125459099864510185953",
+		HashIndex:    "12540426411710453760151393601170235972829881381898755539806736392337874991081",
 		HashValue:    "20008859012517445819901041236908823100073815023181291226591238728478957482360",
-		LinkID:       "2532529201520842754671271788005039166945285509607346705285362964561400144174",
+		LinkID:       "17688680066341107134455191079814377222217258245657465909100070052329567309045",
 		CurrentDate:  "250321",
 		IssuanceDate: "1742578132",
-		TemplateRoot: "11355012832755671330307538002239263753806804904003813746452342893352381210514",
+		TemplateRoot: "3532467563022391950170321692541635800576371972220969617740093781820662149190",
 	}
 
 	require.Equal(t, expected, *signals)

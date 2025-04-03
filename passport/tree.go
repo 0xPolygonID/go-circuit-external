@@ -38,7 +38,6 @@ var updateTemplate = []leaf{
 	newleaf("5940025296598751562822259677636111513267244048295724788691376971035167813215", "0"),  // issuer.id
 	newleaf("12721581730399791084220775389224758160887300573168177512619749567794685336757", "0"), // credentialSubject.nationalities.documentNationalityHash
 	newleaf("8420111610095993874869544651671831438228943062702729758375308097770323355054", "0"),  // credentialSubject.nationalities.documentIssuerHash
-	newleaf("5174935119518540357656305431208837480424139947723235187406958318762813271623", "0"),  // credentialSubject.customFields.strings3
 }
 
 type updateValues struct {
@@ -57,7 +56,6 @@ type updateValues struct {
 	Issuer                   *big.Int
 	Nationality              *big.Int
 	IssuingCountry           *big.Int
-	Dg2Hash                  *big.Int
 }
 
 func (u *updateValues) toList() []*big.Int {
@@ -77,7 +75,6 @@ func (u *updateValues) toList() []*big.Int {
 		u.Issuer,
 		u.Nationality,
 		u.IssuingCountry,
-		u.Dg2Hash,
 	}
 	for _, v := range list {
 		fmt.Println(v)
