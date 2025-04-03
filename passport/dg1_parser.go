@@ -74,21 +74,21 @@ func ParseDG1(data string) (*Passport, error) {
 	}
 
 	passport := &Passport{
-		DocumentType:       line1[:1],
-		IssuingCountry:     line1[2:5],
+		DocumentType:       trimPlaceholder(line1[:1]),
+		IssuingCountry:     trimPlaceholder(line1[2:5]),
 		FirstName:          parseNames(line1[5:44]),
 		FullName:           parseSurname(line1[5:44]),
-		DocumentNumber:     line2[:9],
-		CheckDigitNumber:   line2[9:10],
-		Nationality:        line2[10:13],
-		DateOfBirth:        line2[13:19],
-		CheckDigitDOB:      line2[19:20],
+		DocumentNumber:     trimPlaceholder(line2[:9]),
+		CheckDigitNumber:   trimPlaceholder(line2[9:10]),
+		Nationality:        trimPlaceholder(line2[10:13]),
+		DateOfBirth:        trimPlaceholder(line2[13:19]),
+		CheckDigitDOB:      trimPlaceholder(line2[19:20]),
 		Sex:                sexValue,
-		DateOfExpiry:       line2[21:27],
-		CheckDigitExpiry:   line2[27:28],
+		DateOfExpiry:       trimPlaceholder(line2[21:27]),
+		CheckDigitExpiry:   trimPlaceholder(line2[27:28]),
 		PersonalNumber:     strings.TrimSpace(line2[28:42]),
-		CheckDigitPersonal: line2[42:43],
-		CheckDigitFinal:    line2[43:44],
+		CheckDigitPersonal: trimPlaceholder(line2[42:43]),
+		CheckDigitFinal:    trimPlaceholder(line2[43:44]),
 		Raw:                dg1Raw,
 	}
 
@@ -116,4 +116,9 @@ func parseSurname(nameField string) string {
 
 	// Replace < with spaces in surname to handle multiple surnames
 	return strings.ReplaceAll(parts[0], "<", " ")
+}
+
+func trimPlaceholder(value string) string {
+	// Remove placeholder characters (e.g., <) from the value
+	return strings.TrimSuffix(value, "<")
 }
