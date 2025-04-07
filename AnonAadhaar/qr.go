@@ -257,19 +257,19 @@ func NewVC(data *AnonAadhaarDataV2) (*VC, error) {
 }
 
 type QrInputs struct {
-	Address     *big.Int
-	Birthday    *big.Int
-	Gender      *big.Int
-	Name        *big.Int
-	ReferenceID *big.Int
-
-	IssuanceDate   *big.Int
-	ExpirationDate *big.Int
-
-	DataPadded       []string
-	DataPaddedLen    int
-	DelimiterIndices []int
-	Signature        []string
+	Birthday                 *big.Int
+	FirstName                *big.Int
+	FullName                 *big.Int
+	Gender                   *big.Int
+	GovernmentIdentifier     *big.Int
+	GovernmentIdentifierType *big.Int
+	AddressFirstLine         *big.Int
+	IssuanceDate             *big.Int
+	ExpirationDate           *big.Int
+	DataPadded               []string
+	DataPaddedLen            int
+	DelimiterIndices         []int
+	Signature                []string
 }
 
 func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
@@ -326,21 +326,27 @@ func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash(name): %w", err)
 	}
-	referenceID, ok := big.NewInt(0).SetString(data.ReferenceID, 10)
-	if !ok {
+	referenceIDHash, err := poseidon.HashBytes([]byte(data.ReferenceID))
+	if err != nil {
 		return nil, fmt.Errorf("failed to parse referenceID '%s': %w", data.ReferenceID, err)
 	}
 
+	identifierTypeHash, err := poseidon.HashBytes([]byte("other"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash(identifierType): %w", err)
+	}
+
 	return &QrInputs{
-		Address:     addressHash,
-		Birthday:    birthday,
-		Gender:      genderHash,
-		Name:        nameHash,
-		ReferenceID: referenceID,
+		Birthday:                 birthday,
+		FirstName:                nameHash,
+		FullName:                 nameHash,
+		Gender:                   genderHash,
+		GovernmentIdentifier:     referenceIDHash,
+		GovernmentIdentifierType: identifierTypeHash,
+		AddressFirstLine:         addressHash,
 
-		IssuanceDate:   issuanceDateNano,
-		ExpirationDate: expirationDateNano,
-
+		IssuanceDate:     issuanceDateNano,
+		ExpirationDate:   expirationDateNano,
 		DataPadded:       uint8ArrayToCharArray(dataPadded),
 		DataPaddedLen:    dataPaddedLen,
 		DelimiterIndices: delimiterIndices,
