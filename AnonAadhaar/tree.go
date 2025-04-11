@@ -47,11 +47,11 @@ type updateValues struct {
 	GovernmentIdentifierType *big.Int
 	RevocationNonce          *big.Int
 	AddressFirstLine         *big.Int
-	CredentialStatusID  *big.Int
-	CredentialSubjectID *big.Int
-	ExpirationDate      *big.Int
-	IssuanceDate        *big.Int
-	Issuer              *big.Int
+	CredentialStatusID       *big.Int
+	CredentialSubjectID      *big.Int
+	ExpirationDate           *big.Int
+	IssuanceDate             *big.Int
+	Issuer                   *big.Int
 }
 
 func (u *updateValues) toList() []*big.Int {

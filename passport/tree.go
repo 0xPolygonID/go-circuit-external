@@ -76,9 +76,7 @@ func (u *updateValues) toList() []*big.Int {
 		u.Nationality,
 		u.IssuingCountry,
 	}
-	for _, v := range list {
-		fmt.Println(v)
-	}
+
 	return list
 }
 
