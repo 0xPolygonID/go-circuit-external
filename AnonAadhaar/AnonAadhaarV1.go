@@ -17,6 +17,9 @@ import (
 
 const (
 	AnonAadhaarV1 circuits.CircuitID = "anonAadhaarV1"
+
+	aadhaarJSONLD = "ipfs://QmZbsTnRwtCmbdg3r9o7Txid37LmvPcvmzVi1Abvqu1WKL"
+	aadhaarSchema = "ipfs://QmTojMfyzxehCJVw7aUrdWuxdF68R7oLYooGHCUr9wwsef"
 )
 
 type AnonAadhaarV1Inputs struct {
@@ -60,28 +63,34 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create QRInputs: %w", err)
 	}
-
+	// TODO (illia-korotia): we need to match credential subject to JSON schema
 	return &verifiable.W3CCredential{
 		ID: fmt.Sprintf("urn:uuid:%s", uuid.New().String()),
 		Context: []string{
 			"https://www.w3.org/2018/credentials/v1",
 			"https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
-			"ipfs://QmbtrBk64KmdD571GTYsUgqVPrvNVuUf8sw8CkLszjyPfk",
+			aadhaarJSONLD,
 		},
 		Type: []string{
 			"VerifiableCredential",
-			"AnonAadhaar",
+			"BasicPerson",
 		},
 		IssuanceDate: &vcpayload.IssuanceDate,
 		Expiration:   &vcpayload.ExpirationDate,
 		CredentialSubject: map[string]interface{}{
-			"address":     vcpayload.Address,
-			"dateOfBirth": vcpayload.Birthday,
-			"gender":      vcpayload.Gender,
-			"id":          a.CredentialSubjectID,
-			"name":        vcpayload.Name,
-			"type":        "AnonAadhaar",
-			"referenceID": vcpayload.ReferenceID,
+			"id":                       a.CredentialSubjectID,
+			"fullName":                 vcpayload.Name,
+			"firstName":                vcpayload.Name,
+			"dateOfBirth":              vcpayload.Birthday,
+			"governmentIdentifier":     vcpayload.ReferenceID,
+			"governmentIdentifierType": "other",
+			"gender":                   vcpayload.Gender,
+			"addresses": map[string]interface{}{
+				"primaryAddress": map[string]interface{}{
+					"addressLine1": vcpayload.Address,
+				},
+			},
+			"type": "BasicPerson",
 		},
 		CredentialStatus: &verifiable.CredentialStatus{
 			ID: a.CredentialStatusID,
@@ -91,7 +100,7 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		},
 		Issuer: a.IssuerID,
 		CredentialSchema: verifiable.CredentialSchema{
-			ID:   "ipfs://QmSvcvpYSvBZPmBtetPNJ489mByFCr1DgknpQkMwH4PK3x",
+			ID:   aadhaarSchema,
 			Type: "JsonSchema2023",
 		},
 	}, nil
@@ -146,17 +155,19 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 	}
 
 	proofs, err := mt.update(updateValues{
-		Address:             qrInputs.Address,
-		Birthday:            qrInputs.Birthday,
-		Gender:              qrInputs.Gender,
-		Name:                qrInputs.Name,
-		ReferenceID:         qrInputs.ReferenceID,
-		RevocationNonce:     big.NewInt(int64(a.CredentialStatusRevocationNonce)),
-		CredentialStatusID:  credentialStatusID,
-		CredentialSubjectID: credentialSubjetID,
-		ExpirationDate:      qrInputs.ExpirationDate,
-		IssuanceDate:        qrInputs.IssuanceDate,
-		Issuer:              issuer,
+		Birthday:                 qrInputs.Birthday,
+		FirstName:                qrInputs.FirstName,
+		FullName:                 qrInputs.FullName,
+		Gender:                   qrInputs.Gender,
+		GovernmentIdentifier:     qrInputs.GovernmentIdentifier,
+		GovernmentIdentifierType: qrInputs.GovernmentIdentifierType,
+		RevocationNonce:          big.NewInt(int64(a.CredentialStatusRevocationNonce)),
+		AddressFirstLine:         qrInputs.AddressFirstLine,
+		CredentialStatusID:       credentialStatusID,
+		CredentialSubjectID:      credentialSubjetID,
+		ExpirationDate:           qrInputs.ExpirationDate,
+		IssuanceDate:             qrInputs.IssuanceDate,
+		Issuer:                   issuer,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update template tree: %w", err)

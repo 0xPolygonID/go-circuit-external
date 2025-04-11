@@ -23,7 +23,7 @@ func TestAnonAadhaarInputsMarshalV1(t *testing.T) {
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: 0,
-		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
 BAVbKt9G3HGcVrWO7hmZle+hoyVHEGIKx4Ael29E475FTbDxkOP31ONZiXIRc0Te
@@ -57,7 +57,7 @@ func TestLatestQR(t *testing.T) {
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: 0,
-		CredentialStatusID:              "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+		CredentialStatusID:              "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
 BAVbKt9G3HGcVrWO7hmZle+hoyVHEGIKx4Ael29E475FTbDxkOP31ONZiXIRc0Te
@@ -108,38 +108,45 @@ func TestAnonAadhaarPubSignalsUnmarshaling(t *testing.T) {
 }
 
 func TestW3CCredential(t *testing.T) {
+	//nolint:gosec // hardcoded test data
 	expectedCredential := `{
-      "@context": [
-        "https://www.w3.org/2018/credentials/v1",
-        "https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
-        "ipfs://QmbtrBk64KmdD571GTYsUgqVPrvNVuUf8sw8CkLszjyPfk"
-      ],
-      "type": [
-        "VerifiableCredential",
-        "AnonAadhaar"
-      ],
-      "issuanceDate": "2019-03-08T05:30:00Z",
-      "expirationDate": "2019-09-06T19:54:00Z",
-      "credentialSubject": {
-        "dateOfBirth": 19840101,
-        "gender": "M",
-        "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-		"name": "Sumit Kumar",
-        "type": "AnonAadhaar",
-		"referenceID": "269720190308114407437",
-		"address": "C/O Ishwar Chand East Delhi  B-31, 3rd Floor  110051 Krishna Nagar Delhi Radhey Shyam Park Extension Gandhi Nagar Krishna Nagar"
-      },
-      "credentialStatus": {
-        "id": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
-        "revocationNonce": 0,
-      	"type": "Iden3OnchainSparseMerkleTreeProof2023"
-      },
-      "issuer": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
-      "credentialSchema": {
-        "id": "ipfs://QmSvcvpYSvBZPmBtetPNJ489mByFCr1DgknpQkMwH4PK3x",
-        "type": "JsonSchema2023"
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
+    "ipfs://QmZbsTnRwtCmbdg3r9o7Txid37LmvPcvmzVi1Abvqu1WKL"
+  ],
+  "type": [
+    "VerifiableCredential",
+    "BasicPerson"
+  ],
+  "expirationDate": "2019-09-06T19:54:00Z",
+  "issuanceDate": "2019-03-08T05:30:00Z",
+  "credentialSubject": {
+    "addresses": {
+      "primaryAddress": {
+        "addressLine1": "C/O Ishwar Chand East Delhi  B-31, 3rd Floor  110051 Krishna Nagar Delhi Radhey Shyam Park Extension Gandhi Nagar Krishna Nagar"
       }
-    }`
+    },
+    "dateOfBirth": 19840101,
+    "firstName": "Sumit Kumar",
+    "fullName": "Sumit Kumar",
+    "gender": "M",
+    "governmentIdentifier": "269720190308114407437",
+    "governmentIdentifierType": "other",
+    "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
+    "type": "BasicPerson"
+  },
+  "credentialStatus": {
+    "id": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
+    "type": "Iden3OnchainSparseMerkleTreeProof2023",
+    "revocationNonce": 0
+  },
+  "issuer": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
+  "credentialSchema": {
+    "id": "ipfs://QmTojMfyzxehCJVw7aUrdWuxdF68R7oLYooGHCUr9wwsef",
+    "type": "JsonSchema2023"
+  }
+}`
 
 	bi, ok := big.NewInt(0).SetString(testdata, 10)
 	require.True(t, ok)
@@ -148,7 +155,7 @@ func TestW3CCredential(t *testing.T) {
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: 0,
-		CredentialStatusID:              "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+		CredentialStatusID:              "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
 BAVbKt9G3HGcVrWO7hmZle+hoyVHEGIKx4Ael29E475FTbDxkOP31ONZiXIRc0Te
@@ -174,44 +181,4 @@ func debugLog(t *testing.T, message string) {
 	if *debug {
 		t.Log(message)
 	}
-}
-
-/*
-	Mobile setup:
-
-Contract address: 0x9b00683BF5D9cb379643fDcd547ff896e627f88C
-IssuerDID:  did:iden3:polygon:amoy:x6x5sor7zpyC832QeVKJVZiUteB64kCdM6EQofCM8
-RevocationStatusID did:iden3:polygon:amoy:x6x5sor7zpyC832QeVKJVZiUteB64kCdM6EQofCM8/credentialStatus?contractAddress=80002:0x9b00683BF5D9cb379643fDcd547ff896e627f88C
-Request Id:  23095784
-*/
-func TestEmaProfTest(t *testing.T) {
-	bi, _ := big.NewInt(0).SetString("2458220980000995862066001939936246802716240371869174049336682841719692126247009299199590504974226506388681135182784755726867737037580546066982679944129436412056301741856301735140508330558822687620792925421330761802237154200308615240434620310169423973114840011635843688402103513069318989626934956381643935745990184546852036340961354422282871938697585293241350341798271696602247690832397652078060694852641662591501631579747933808076455178738670399920662374499864297593265453112244547291762722513518516246019345053147378062060901498509897799570704332548129621754049773184016330014859240840797650727962563766015127262969274954802394801177274582674393676694993499475875100703317462307693404006393438214340957247072557190000215094657790496685943128356910079357510381856825490088585074426783553846503967262464932286983642918631898903364046300400322857356098494989584687974614183121999796978324056556045088259455606904460568653233177764885329525268279086198918038378427833849017495988819867386146474451460373445527924242427724047697227337051082538394528308480235362281108172256111667077016562110254862591509975053307339491204135308588557625965656226082058035282110843256030182123037971655603475208371456512087464174223768488601770918137298748862264746018104810128991758338380599530993310455919500302824623155000731305611371042145200841254806255865995318623108235191596603951165275185930011821119265721759725382693489484121092685918512981167700894301341543605132625285165529852218930660965312783132111792933501700671392604645040844774291082487749463246732095421489489967465429238352024457220765425149479762546250126797085529277538692917762903221849648191664510998477858824773153069255152814515519082337946870859069322151739361929637805561506841174418244408762903845835604466993570899596062498419627122845914592842847360785609682976060266267942373722225770811919454149850546074842681458050395508952340359341353033477840657071218773115992894312783242184434334553217085367782195918977883926196275202179897245065166210626063164178649389536208068908279090757841016609729596107711320949178193804640390533914765774959833355254616355226272923798793213687689575826978534701643022075407714527197944948562142581694050756277735339199413982512475541764246985610148744650800633898674711616175749661331720215873028826413504050008159827082134939518678574350455023781465641396202660535854508955191630956078918378975268999973338119860887901910068562152125562879250851140152602992164797812028438589383738978535698229811820755504866455041302601064958279587303071054610189772975801363225329989208068836306238833634628443113166023706159481737241035200150987062011417878551472027502275326035395668211192675832152943076082864954316352733287912760222408637497104787412679154990476319450227081195498537432562592877150024094071826181096954313909576778821558845107695908714582158178377725395510877362725466274042623611689402487677354853985147860485560945000273610937073820872155929877018066595782821232574175322423121700405631456367499387506851840", 10)
-	inputs := AnonAadhaarV1Inputs{
-		QRData:                          bi,
-		IssuerID:                        "did:iden3:polygon:amoy:x6x5sor7zpyC832QeVKJVZiUteB64kCdM6EQofCM8",
-		CredentialSubjectID:             "did:iden3:privado:main:2Sk86kMPg3uwQouUT9fF2bFSs5NFTfefcdT76jv4ma",
-		CredentialStatusRevocationNonce: 0,
-		CredentialStatusID:              "did:iden3:polygon:amoy:x6x5sor7zpyC832QeVKJVZiUteB64kCdM6EQofCM8/credentialStatus?contractAddress=80002:0x9b00683BF5D9cb379643fDcd547ff896e627f88C",
-		PubKey: `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAonIsDl8t5bpwftk/A27C
-sfC5VZMjkPrMDwvL8gyAoVwIi0iGhmty6yWrC/VaL+Brae29XMg7dMdwnbIUHmwH
-xovN+FnT2vfz/O0kHQcgVdwVSIR0tFwsmC+pVKpSqm//skgYYcZQhdhLZBWOn0PZ
-81ymm0jOkwBSIQKkyuCTv/1HSwjTLR0EBvaH9+Vb0iaiOEv1ikHDhMOXTxx8URWB
-nJJt463z7LuZBMSG8fXVMDl3vqY1hDZzKbXBaK/clRIXMff0jUOvfPMfabHju+eU
-nceosQwL3eurq96+oHahz4FmrfBqikHe3xQ7/4NdvSvVuwth0kcsI0ptRBG8m1Ng
-lQIDAQAB
------END PUBLIC KEY-----`,
-		NullifierSeed: 12345678,
-		SignalHash:    1001,
-	}
-
-	inputsMarshal, err := inputs.InputsMarshal()
-	require.NoError(t, err)
-	fmt.Println("circuit inputs:", string(inputsMarshal))
-
-	verifiableCredential, err := inputs.W3CCredential()
-	require.NoError(t, err)
-	jsonVC, err := json.MarshalIndent(verifiableCredential, "", "  ")
-	require.NoError(t, err)
-	fmt.Println("verifiable credential:", string(jsonVC))
 }
