@@ -1,7 +1,6 @@
 package passport
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"testing"
@@ -90,7 +89,7 @@ func TestInputsMarshal(t *testing.T) {
 		LinkNonce:                       "1",
 	}
 
-	inputsCircuit, err := inputs.InputsMarshal(context.Background())
+	inputsCircuit, err := inputs.InputsMarshal()
 	require.NoError(t, err)
 	expectedInputs, err := os.ReadFile("./testdata/inputs.json")
 	require.NoError(t, err)

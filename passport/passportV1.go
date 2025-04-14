@@ -132,7 +132,8 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 	return &vc, nil
 }
 
-func (a *PassportV1Inputs) InputsMarshal(ctx context.Context) ([]byte, error) {
+func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
+	ctx := context.TODO()
 	tmpl, err := template.New(templateSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create template: %w", err)
