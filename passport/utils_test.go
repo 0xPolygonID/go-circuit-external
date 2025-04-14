@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// TODO (illia-korotia): Sync with circom circuits
+// TODO (illia-korotia): Sync with circom circuits.
 func TestConvertData_Success(t *testing.T) {
 	tests := []struct {
 		name         string

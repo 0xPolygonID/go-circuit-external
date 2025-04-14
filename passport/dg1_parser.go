@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-// dg1TagSize is the size of the group tag in bytes
+// dg1TagSize is the size of the group tag in bytes.
 const dg1TagSize = 5
 
-// Sex represents the gender in a passport
+// Sex represents the gender in a passport.
 type Sex string
 
 const (
@@ -19,7 +19,7 @@ const (
 	Other  Sex = "X"
 )
 
-// Passport represents the data structure for a TD3 type passport
+// Passport represents the data structure for a TD3 type passport.
 type Passport struct {
 	DocumentType       string // Document type (P for passport)
 	IssuingCountry     string // Country code of the issuing state
@@ -39,7 +39,7 @@ type Passport struct {
 	Raw                []byte // Raw data including group tag
 }
 
-// ParseDG1 parses the provided DG1 data and returns a Passport struct
+// ParseDG1 parses the provided DG1 data and returns a Passport struct.
 func ParseDG1(data string) (*Passport, error) {
 	dg1Raw, err := hex.DecodeString(data)
 	if err != nil {
@@ -49,7 +49,10 @@ func ParseDG1(data string) (*Passport, error) {
 
 	dg1 := string(dg1RawWithoutTag)
 	if len(dg1) != 88 {
-		return nil, fmt.Errorf("invalid TD3 format: data should be 88 characters long: %d", len(dg1))
+		return nil, fmt.Errorf(
+			"invalid TD3 format: data should be 88 characters long: %d",
+			len(dg1),
+		)
 	}
 
 	line1 := dg1[:44]
@@ -95,7 +98,7 @@ func ParseDG1(data string) (*Passport, error) {
 	return passport, nil
 }
 
-// parseNames extracts given names from the name field
+// parseNames extracts given names from the name field.
 func parseNames(nameField string) string {
 	// Names come after the surname in the format "SURNAME<<FIRSTNAME<MIDDLENAME"
 	parts := strings.Split(nameField, "<<")
@@ -107,7 +110,7 @@ func parseNames(nameField string) string {
 	return strings.ReplaceAll(parts[1], "<", " ")
 }
 
-// parseSurname extracts the surname from the name field
+// parseSurname extracts the surname from the name field.
 func parseSurname(nameField string) string {
 	parts := strings.Split(nameField, "<<")
 	if len(parts) == 0 {

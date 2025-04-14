@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	// Test assets
+	// Test assets.
 	publicKeyPEM = []byte(`-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
 BAVbKt9G3HGcVrWO7hmZle+hoyVHEGIKx4Ael29E475FTbDxkOP31ONZiXIRc0Te
@@ -41,7 +41,7 @@ BKWQ26Lq7ODq6e6Otxf0KOtWTeVSzlCL66MGBvQ36LF1g8PLEZ9hvvX06ieaE99W
 HDK9/pGSuobx6Fi7ufzqymirT/GOuxslquB4mleCu4ArCg2qAVC2wDjQymgvq8FS
 bVukYnC6XdwqYhvIuTPnEys4gGdeirY+UPGQeqxMrNm+ZpKPTS0NwzxHwlhutw==
 -----END CERTIFICATE-----`)
-	// Productuin assets
+	// Productuin assets.
 	certificatePEM = []byte(`-----BEGIN CERTIFICATE-----
 MIIHwjCCBqqgAwIBAgIEU5laMzANBgkqhkiG9w0BAQsFADCB/DELMAkGA1UEBhMC
 SU4xQTA/BgNVBAoTOEd1amFyYXQgTmFybWFkYSBWYWxsZXkgRmVydGlsaXplcnMg
@@ -89,7 +89,6 @@ aMdtXo0nbr150tMe8ZSvY2fMiTCY1w==
 )
 
 func TestPemToJWK(t *testing.T) {
-
 	tests := []struct {
 		name       string
 		pemContent []byte

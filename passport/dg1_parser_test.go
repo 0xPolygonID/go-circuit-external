@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// DG1 is the same as the MRZ data, but with a group tag at the beginning
+// DG1 is the same as the MRZ data, but with a group tag at the beginning.
 func mrzToDg1(mrz string) string {
 	tag := []byte{97, 91, 95, 31, 88}
 	mrzBytes := []byte(mrz)
@@ -61,8 +61,18 @@ func TestParseDG1(t *testing.T) {
 
 			// Check each field individually for better error messages
 			require.Equal(t, tt.expected.DocumentType, result.DocumentType, "DocumentType mismatch")
-			require.Equal(t, tt.expected.IssuingCountry, result.IssuingCountry, "IssuingCountry mismatch")
-			require.Equal(t, tt.expected.DocumentNumber, result.DocumentNumber, "DocumentNumber mismatch")
+			require.Equal(
+				t,
+				tt.expected.IssuingCountry,
+				result.IssuingCountry,
+				"IssuingCountry mismatch",
+			)
+			require.Equal(
+				t,
+				tt.expected.DocumentNumber,
+				result.DocumentNumber,
+				"DocumentNumber mismatch",
+			)
 			require.Equal(t, tt.expected.FirstName, result.FirstName, "FirstName mismatch")
 			require.Equal(t, tt.expected.FullName, result.FullName, "FullName mismatch")
 			require.Equal(t, tt.expected.Nationality, result.Nationality, "Nationality mismatch")

@@ -126,7 +126,7 @@ func createDecompressor(data []byte) (io.ReadCloser, error) {
 	return zr, nil
 }
 
-// verify check formats
+// verify check formats.
 func (a *AnonAadhaarDataV2) verify() error {
 	if a.SignedTime.IsZero() {
 		return errors.New("signed time is not set")
@@ -151,7 +151,7 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	if err != nil {
 		return fmt.Errorf("failed to create zlib/gzip reader: %w", err)
 	}
-	//nolint:errcheck // ignore error
+	//nolint:errcheck // Ignore close error
 	defer r.Close()
 	uncompressedData, err := io.ReadAll(r)
 	if err != nil {
@@ -172,14 +172,21 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	// convert dob to time
 	dob, err := time.Parse(mm_dd_yyyy_template, string(partsWithoutPhoto[4]))
 	if err != nil {
-		return fmt.Errorf("failed to parse date of birth '%s': %w", string(partsWithoutPhoto[4]), err)
+		return fmt.Errorf(
+			"failed to parse date of birth '%s': %w",
+			string(partsWithoutPhoto[4]),
+			err,
+		)
 	}
 
 	a.Version = string(partsWithoutPhoto[0])
 	a.ContactIndecator = string(partsWithoutPhoto[1])
 	a.ReferenceID = string(partsWithoutPhoto[2])
 	a.PassportLastDigits = string(partsWithoutPhoto[2][:4])
-	sigtime, err := time.Parse("2006010215", string(partsWithoutPhoto[2][4:14])) // format: YYYYMMDDHH (24 hours representation)
+	sigtime, err := time.Parse(
+		"2006010215",
+		string(partsWithoutPhoto[2][4:14]),
+	) // format: YYYYMMDDHH (24 hours representation)
 	if err != nil {
 		return fmt.Errorf("failed to parse signed time '%s': %w",
 			string(partsWithoutPhoto[2][4:14]), err)

@@ -11,7 +11,7 @@ const (
 )
 
 // FormatDate formats date to 8 digits format
-// TODO (illia-korotia): Test each case with the same data here and in the circuit
+// TODO (illia-korotia): Test each case with the same data here and in the circuit.
 func formatDate(date, currentDate int) int {
 	if date > currentDate {
 		return 19000000 + date
@@ -32,10 +32,10 @@ func intToTime(dateInt int) time.Time {
 }
 
 // dateOfBirth and dateOfExpiry are provided in YYMMDD format from passport
-// this function uses issuanceDate(time.Now) do define the year
+// this function uses issuanceDate(time.Now) do define the year.
 func convertData(today time.Time, dateOfBirth, dateOfExpiry string) (
-	dob, doe time.Time, err error) {
-
+	dob, doe time.Time, err error,
+) {
 	dobInt, err := strconv.Atoi(dateOfBirth)
 	if err != nil {
 		return time.Time{}, time.Time{},

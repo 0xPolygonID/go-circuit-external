@@ -23,13 +23,17 @@ func splitToWords(number, wordsize, numberElement *big.Int) ([]*big.Int, error) 
 	}
 
 	if t.Cmp(big.NewInt(0)) != 0 {
-		return nil, fmt.Errorf("number %s does not fit in %d bits", number.String(), new(big.Int).Mul(wordsize, numberElement).Uint64())
+		return nil, fmt.Errorf(
+			"number %s does not fit in %d bits",
+			number.String(),
+			new(big.Int).Mul(wordsize, numberElement).Uint64(),
+		)
 	}
 
 	return words, nil
 }
 
-// convert a PEM encoded key to a JWK
+// convert a PEM encoded key to a JWK.
 func pemToJWK(content []byte) (jwk.Key, error) {
 	key, _, err := jwk.NewPEMDecoder().Decode(content)
 	if err != nil {
@@ -54,13 +58,13 @@ func extractNfromPubKey(content []byte) (*big.Int, error) {
 // https://github.com/zkemail/zk-email-verify/blob/e1084969fbee16317290e4380b3837af74fea616/packages/helpers/src/sha-utils.ts#L88
 func sha256Pad(m []byte, maxShaBytes int) (paddedMessage []byte, messageLen int, err error) {
 	// do not modify the original message
-	message := make([]byte, len(m))
-	copy(message, m)
+	paddedMessage = make([]byte, len(m))
+	copy(paddedMessage, m)
 
-	msgLen := len(message) * 8
+	msgLen := len(paddedMessage) * 8
 	msgLenBytes := common.Int64ToBytes(int64(msgLen))
 
-	paddedMessage = append(message, 0x80)
+	paddedMessage = append(paddedMessage, 0x80)
 	for ((len(paddedMessage)*8 + len(msgLenBytes)*8) % 512) != 0 {
 		paddedMessage = append(paddedMessage, 0x00)
 	}
@@ -75,7 +79,11 @@ func sha256Pad(m []byte, maxShaBytes int) (paddedMessage []byte, messageLen int,
 		paddedMessage = append(paddedMessage, common.Int64ToBytes(0)...)
 	}
 	if len(paddedMessage) != maxShaBytes {
-		return nil, 0, fmt.Errorf("padding to max length did not complete properly: got %d, expected %d", len(paddedMessage), maxShaBytes)
+		return nil, 0, fmt.Errorf(
+			"padding to max length did not complete properly: got %d, expected %d",
+			len(paddedMessage),
+			maxShaBytes,
+		)
 	}
 
 	return paddedMessage, messageLen, nil

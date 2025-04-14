@@ -109,7 +109,6 @@ func TestAnonAadhaarPubSignalsUnmarshaling(t *testing.T) {
 }
 
 func TestW3CCredential(t *testing.T) {
-	//nolint:gosec // hardcoded test data
 	expectedCredential := `{
   "@context": [
     "https://www.w3.org/2018/credentials/v1",

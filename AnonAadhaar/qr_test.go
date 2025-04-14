@@ -45,10 +45,20 @@ func TestQRData(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, expected["undefined"], actual.Version, "Version mismatch")
-	assert.Equal(t, expected["Email_mobile_present_bit_indicator_value"], actual.ContactIndecator, "ContactIndicator mismatch")
+	assert.Equal(
+		t,
+		expected["Email_mobile_present_bit_indicator_value"],
+		actual.ContactIndecator,
+		"ContactIndicator mismatch",
+	)
 	assert.Equal(t, expected["ReferenceId"], actual.ReferenceID, "ReferenceID mismatch")
 	assert.Equal(t, expected["Name"], actual.Name, "Name mismatch")
-	assert.Equal(t, expected["DOB"], actual.DateOfBirth.Format(mm_dd_yyyy_template), "DateOfBirth mismatch")
+	assert.Equal(
+		t,
+		expected["DOB"],
+		actual.DateOfBirth.Format(mm_dd_yyyy_template),
+		"DateOfBirth mismatch",
+	)
 	assert.Equal(t, expected["Gender"], actual.Gender, "Gender mismatch")
 	assert.Equal(t, expected["CareOf"], actual.Address.CareOf, "CareOf mismatch")
 	assert.Equal(t, expected["District"], actual.Address.District, "District mismatch")
@@ -61,10 +71,22 @@ func TestQRData(t *testing.T) {
 	assert.Equal(t, expected["Street"], actual.Address.Street, "Street mismatch")
 	assert.Equal(t, expected["SubDistrict"], actual.Address.SubDistrict, "SubDistrict mismatch")
 	assert.Equal(t, expected["VTC"], actual.Address.VTC, "VTC mismatch")
-	assert.Equal(t, expected["PhoneNumberLast4"], actual.MobileLastDigits, "MobileLastDigits mismatch")
-	assert.Equal(t, expected["PhoneNumberLast4"], actual.MobileLastDigits, "MobileLastDigits mismatch")
-	assert.Equal(t,
+	assert.Equal(
+		t,
+		expected["PhoneNumberLast4"],
+		actual.MobileLastDigits,
+		"MobileLastDigits mismatch",
+	)
+	assert.Equal(
+		t,
+		expected["PhoneNumberLast4"],
+		actual.MobileLastDigits,
+		"MobileLastDigits mismatch",
+	)
+	assert.Equal(
+		t,
 		"C/O Ishwar Chand East Delhi  B-31, 3rd Floor  110051 Krishna Nagar Delhi Radhey Shyam Park Extension Gandhi Nagar Krishna Nagar",
 		actual.Address.String(),
-		"Address mismatch")
+		"Address mismatch",
+	)
 }

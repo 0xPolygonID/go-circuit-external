@@ -48,7 +48,6 @@ func New(
 		return nil, fmt.Errorf("failed to create merkle tree: %w", err)
 	}
 	return &Template{mt}, nil
-
 }
 
 func (t *Template) Upload(ctx context.Context, nodes []Node) error {
@@ -62,7 +61,7 @@ func (t *Template) Upload(ctx context.Context, nodes []Node) error {
 	return nil
 }
 
-func (t *Template) Update(ctx context.Context, nodes []Node) ([][]*big.Int, error) {
+func (t *Template) Update(_ context.Context, nodes []Node) ([][]*big.Int, error) {
 	proofs := make([][]*big.Int, 0, len(nodes))
 	for _, node := range nodes {
 		p, err := t.tree.Update(context.Background(), node.Key, node.Value)

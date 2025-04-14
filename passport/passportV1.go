@@ -33,21 +33,21 @@ var (
 	zero = big.NewInt(0)
 
 	passportTemplate = []template.Node{
-		template.Node{basicPerson.DateOfBirth, zero},
-		template.Node{basicPerson.DocumentExpirationDate, zero},
-		template.Node{basicPerson.FirstName, zero},
-		template.Node{basicPerson.FullName, zero},
-		template.Node{basicPerson.GovernmentIdentifier, zero},
-		template.Node{basicPerson.GovernmentIdentifierType, zero},
-		template.Node{basicPerson.Sex, zero},
-		template.Node{basicPerson.RevocationNonce, zero},
-		template.Node{basicPerson.CredentialStatusID, zero},
-		template.Node{basicPerson.CredentialSubjectID, zero},
-		template.Node{basicPerson.ExpirationDate, zero},
-		template.Node{basicPerson.IssuanceDate, zero},
-		template.Node{basicPerson.Issuer, zero},
-		template.Node{basicPerson.DocumentNationality, zero},
-		template.Node{basicPerson.DocumentIssuer, zero},
+		{basicPerson.DateOfBirth, zero},
+		{basicPerson.DocumentExpirationDate, zero},
+		{basicPerson.FirstName, zero},
+		{basicPerson.FullName, zero},
+		{basicPerson.GovernmentIdentifier, zero},
+		{basicPerson.GovernmentIdentifierType, zero},
+		{basicPerson.Sex, zero},
+		{basicPerson.RevocationNonce, zero},
+		{basicPerson.CredentialStatusID, zero},
+		{basicPerson.CredentialSubjectID, zero},
+		{basicPerson.ExpirationDate, zero},
+		{basicPerson.IssuanceDate, zero},
+		{basicPerson.Issuer, zero},
+		{basicPerson.DocumentNationality, zero},
+		{basicPerson.DocumentIssuer, zero},
 	}
 )
 
@@ -202,27 +202,27 @@ func (a *PassportV1Inputs) InputsMarshal(ctx context.Context) ([]byte, error) {
 	issuer := *valuesToHash[9].dest
 
 	siblings, err := tmpl.Update(ctx, []template.Node{
-		template.Node{
+		{
 			basicPerson.DateOfBirth,
 			big.NewInt(int64(common.TimeToInt(dobTime))),
 		},
-		template.Node{
+		{
 			basicPerson.DocumentExpirationDate,
 			big.NewInt(int64(common.TimeToInt(doeTime))),
 		},
-		template.Node{basicPerson.FirstName, firstNameHash},
-		template.Node{basicPerson.FullName, fullNameHash},
-		template.Node{basicPerson.GovernmentIdentifier, govermentIdentifierHash},
-		template.Node{basicPerson.GovernmentIdentifierType, govermentIdentifierTypeHash},
-		template.Node{basicPerson.Sex, sexHash},
-		template.Node{basicPerson.RevocationNonce, big.NewInt(int64(a.CredentialStatusRevocationNonce))},
-		template.Node{basicPerson.CredentialStatusID, credentialStatusID},
-		template.Node{basicPerson.CredentialSubjectID, credentialSubjetID},
-		template.Node{basicPerson.ExpirationDate, common.TimeToUnixNano(credentialExpirationTime)},
-		template.Node{basicPerson.IssuanceDate, common.TimeToUnixNano(timeNow)},
-		template.Node{basicPerson.Issuer, issuer},
-		template.Node{basicPerson.DocumentNationality, notionalityHash},
-		template.Node{basicPerson.DocumentIssuer, issuingCountryHash},
+		{basicPerson.FirstName, firstNameHash},
+		{basicPerson.FullName, fullNameHash},
+		{basicPerson.GovernmentIdentifier, govermentIdentifierHash},
+		{basicPerson.GovernmentIdentifierType, govermentIdentifierTypeHash},
+		{basicPerson.Sex, sexHash},
+		{basicPerson.RevocationNonce, big.NewInt(int64(a.CredentialStatusRevocationNonce))},
+		{basicPerson.CredentialStatusID, credentialStatusID},
+		{basicPerson.CredentialSubjectID, credentialSubjetID},
+		{basicPerson.ExpirationDate, common.TimeToUnixNano(credentialExpirationTime)},
+		{basicPerson.IssuanceDate, common.TimeToUnixNano(timeNow)},
+		{basicPerson.Issuer, issuer},
+		{basicPerson.DocumentNationality, notionalityHash},
+		{basicPerson.DocumentIssuer, issuingCountryHash},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update template: %w", err)
@@ -265,7 +265,7 @@ func toIntsArray(b []byte) []int {
 	return out
 }
 
-// PassportV1PubSignals public inputs
+// PassportV1PubSignals public inputs.
 type PassportV1PubSignals struct {
 	HashIndex    string `json:"hashIndex"`
 	HashValue    string `json:"hashValue"`
@@ -275,7 +275,7 @@ type PassportV1PubSignals struct {
 	TemplateRoot string `json:"templateRoot"`
 }
 
-// PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals
+// PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals.
 func (a *PassportV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// expected order:
 	// hashIndex - 1
@@ -307,7 +307,7 @@ func (a *PassportV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	return nil
 }
 
-// GetObjMap returns struct field as a map
+// GetObjMap returns struct field as a map.
 func (a *PassportV1PubSignals) GetObjMap() map[string]interface{} {
 	out := make(map[string]interface{})
 

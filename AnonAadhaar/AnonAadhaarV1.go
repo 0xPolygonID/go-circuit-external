@@ -27,19 +27,19 @@ var (
 	zero = big.NewInt(0)
 
 	anonAadhaarTemplate = []template.Node{
-		template.Node{basicPerson.DateOfBirth, zero},
-		template.Node{basicPerson.FirstName, zero},
-		template.Node{basicPerson.FullName, zero},
-		template.Node{basicPerson.Gender, zero},
-		template.Node{basicPerson.GovernmentIdentifier, zero},
-		template.Node{basicPerson.GovernmentIdentifierType, zero},
-		template.Node{basicPerson.RevocationNonce, zero},
-		template.Node{basicPerson.AddressLine1, zero},
-		template.Node{basicPerson.CredentialStatusID, zero},
-		template.Node{basicPerson.CredentialSubjectID, zero},
-		template.Node{basicPerson.ExpirationDate, zero},
-		template.Node{basicPerson.IssuanceDate, zero},
-		template.Node{basicPerson.Issuer, zero},
+		{basicPerson.DateOfBirth, zero},
+		{basicPerson.FirstName, zero},
+		{basicPerson.FullName, zero},
+		{basicPerson.Gender, zero},
+		{basicPerson.GovernmentIdentifier, zero},
+		{basicPerson.GovernmentIdentifierType, zero},
+		{basicPerson.RevocationNonce, zero},
+		{basicPerson.AddressLine1, zero},
+		{basicPerson.CredentialStatusID, zero},
+		{basicPerson.CredentialSubjectID, zero},
+		{basicPerson.ExpirationDate, zero},
+		{basicPerson.IssuanceDate, zero},
+		{basicPerson.Issuer, zero},
 	}
 )
 
@@ -181,26 +181,29 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal(ctx context.Context) ([]byte, error)
 	}
 
 	siblings, err := tmpl.Update(ctx, []template.Node{
-		template.Node{
+		{
 			basicPerson.DateOfBirth,
 			big.NewInt(int64(common.TimeToInt(ah.DateOfBirth))),
 		},
-		template.Node{basicPerson.FirstName, nameHash},
-		template.Node{basicPerson.FullName, nameHash},
-		template.Node{basicPerson.Gender, genderHash},
-		template.Node{basicPerson.GovernmentIdentifier, referenceIDHash},
-		template.Node{basicPerson.GovernmentIdentifierType, identifierTypeHash},
-		template.Node{basicPerson.RevocationNonce, big.NewInt(int64(a.CredentialStatusRevocationNonce))},
-		template.Node{basicPerson.AddressLine1, addressHash},
-		template.Node{basicPerson.CredentialStatusID, credentialStatusID},
-		template.Node{basicPerson.CredentialSubjectID, credentialSubjetID},
-		template.Node{
+		{basicPerson.FirstName, nameHash},
+		{basicPerson.FullName, nameHash},
+		{basicPerson.Gender, genderHash},
+		{basicPerson.GovernmentIdentifier, referenceIDHash},
+		{basicPerson.GovernmentIdentifierType, identifierTypeHash},
+		{basicPerson.RevocationNonce, big.NewInt(int64(a.CredentialStatusRevocationNonce))},
+		{basicPerson.AddressLine1, addressHash},
+		{basicPerson.CredentialStatusID, credentialStatusID},
+		{basicPerson.CredentialSubjectID, credentialSubjetID},
+		{
 			basicPerson.ExpirationDate,
 			common.TimeToUnixNano(calculateDOE(ah.SignedTime)),
 		},
-		template.Node{basicPerson.IssuanceDate, common.TimeToUnixNano(ah.SignedTime)},
-		template.Node{basicPerson.Issuer, issuer},
+		{basicPerson.IssuanceDate, common.TimeToUnixNano(ah.SignedTime)},
+		{basicPerson.Issuer, issuer},
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update template: %w", err)
+	}
 
 	qrParts, err := prepareInputs(ah)
 	if err != nil {
@@ -242,7 +245,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal(ctx context.Context) ([]byte, error)
 	return jsonBytes, nil
 }
 
-// AnonAadhaarV1PubSignals public inputs
+// AnonAadhaarV1PubSignals public inputs.
 type AnonAadhaarV1PubSignals struct {
 	PubKeyHash     string
 	Nullifier      string
@@ -256,7 +259,7 @@ type AnonAadhaarV1PubSignals struct {
 	IssuerDIDHash  string
 }
 
-// PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals
+// PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals.
 func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// expected order:
 	// 0 - pubKeyHash
@@ -302,7 +305,7 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	return nil
 }
 
-// GetObjMap returns struct field as a map
+// GetObjMap returns struct field as a map.
 func (a *AnonAadhaarV1PubSignals) GetObjMap() map[string]interface{} {
 	out := make(map[string]interface{})
 

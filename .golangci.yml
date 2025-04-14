@@ -1,71 +1,112 @@
-linters-settings:
-  govet:
-    enable-all: true
-  revive:
-    confidence: 0.1
-    rules:
-      - name: package-comments
-        disabled: true
-  goconst:
-    min-len: 2
-    min-occurrences: 2
-  misspell:
-    locale: US
-  lll:
-    line-length: 140
-  gocritic:
-    enabled-tags:
-      - performance
-      - style
-      - experimental
-    disabled-checks:
-      - hugeParam
-      - commentedOutCode
-  gci:
-    sections:
-      - standard
-      - default
+# Configuration for golangci-lint v1.56+ (April 2025)
+version: "2"
+run:
+  timeout: 5m
+  go: '1.22'
+  tests: true
+  allow-parallel-runners: true
+  concurrency: 4
+
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
 
 linters:
+  default: standard
   enable:
-    - bodyclose
-    - revive
-    - govet
-    - unconvert
-    - gosec
-    - gocyclo
-    - dupl
-    - misspell
-    - unparam
-    - typecheck
-    - ineffassign
-    - stylecheck
-    - gochecknoinits
-    - gocritic
-    - nakedret
-    - gosimple
-    - prealloc
-    - gci
-    - errcheck
-    - gofmt
-    - goimports
-    - staticcheck
-    - unused
-  fast: false
-  disable-all: true
+    # Core linters
+    - errcheck      # Check for unchecked errors
+    - govet         # Examines Go source code and reports suspicious constructs
+    - ineffassign   # Detects ineffectual assignments
+    - staticcheck   # Best practices checks
+    - unused        # Check for unused constants, variables, functions and types
+    
+    # Additional recommended linters
+    - bodyclose     # Check whether HTTP response body is closed
+    - dogsled       # Checks assignments with too many blank identifiers
+    - dupl          # Code clone detection
+    - errorlint     # Checks for errors handling patterns
+    - gochecknoinits # Check that no init functions are present
+    - goconst       # Find repeated strings that could be constants
+    - gocritic      # Checks for various code style issues
+    - gocyclo       # Check function complexity
+    - godot         # Check if comments end with a period
+    - gosec         # Inspects source code for security problems
+    - misspell      # Finds commonly misspelled English words
+    - nakedret      # Find naked returns
+    - nolintlint    # Reports ill-formed nolint directives
+    - prealloc      # Find slice declarations that could be preallocated
+    - revive        # Fast, configurable, extensible, flexible linter
+    - thelper       # Detector of test helpers without t.Helper() call
+    - tparallel     # Detects inappropriate use of t.Parallel()
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Find unused function parameters
+    - whitespace    # Checks for unnecessary whitespace
 
-issues:
-  exclude-rules:
-    - text: "at least one file in a package should have a package comment"
-      linters:
-        - stylecheck
-    - text: "should have a package comment, unless it's in another file for this package"
-      linters:
-        - revive
-    - text: "appendAssign: *"
-      linters:
-        - gocritic
-    - text: "fieldalignment: struct with *"
-      linters:
-        - govet
-  exclude-use-default: false
+  settings:
+    dogsled:
+      max-blank-identifiers: 2
+    dupl:
+      threshold: 100
+    errorlint:
+      errorf: true
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+        - opinionated
+        - experimental
+      disabled-checks:
+        - hugeParam
+        - commentedOutCode
+        - unnamedResult
+    gocyclo:
+      min-complexity: 15
+    godot:
+      scope: declarations
+    govet:
+      enable-all: true
+      disable:
+        - shadow
+        - fieldalignment
+        - composites
+    misspell:
+      locale: US
+    nakedret:
+      max-func-lines: 30
+    nolintlint:
+      allow-unused: false
+      require-explanation: true
+      require-specific: true
+    revive:
+      confidence: 0.1
+      rules:
+        - name: package-comments
+          disabled: true
+        - name: exported
+          disabled: true
+        - name: var-naming
+          disabled: true
+    unparam:
+      check-exported: false
+  exclusions:
+    rules:
+      - path: "_test\\.go"
+        linters:
+          - bodyclose
+          - dupl
+          - funlen
+          - goconst
+          - gosec
+          - noctx
+          - wsl
+          - gocritic
