@@ -1,4 +1,4 @@
-package gocircuitexternal
+package anonaadhaar
 
 import (
 	"bytes"
@@ -11,11 +11,7 @@ import (
 	"math/big"
 	"strings"
 	"time"
-
-	"github.com/iden3/go-iden3-crypto/poseidon"
 )
-
-const timeTemplate = "02-01-2006" // DD-MM-YYYY regarding to Indian format of date
 
 type GenderString string
 
@@ -62,10 +58,10 @@ func IsValidGenderInt(g GenderInt) bool {
 }
 
 const (
-	delimiter              = byte(255)
-	ISTOffset              = 19800
-	supportedQRDataVersion = "V2"
-	halfYearSeconds        = 15776640
+	delimiter = byte(255)
+	istOffset = 19800
+
+	mm_dd_yyyy_template = "02-01-2006"
 )
 
 type Address struct {
@@ -108,7 +104,7 @@ type AnonAadhaarDataV2 struct {
 	PassportLastDigits string    `json:"passportLastDigits"`
 	SignedTime         time.Time `json:"signedTime"`
 	Name               string    `json:"name"`
-	DateOfBirth        string    `json:"dateOfBirth"`
+	DateOfBirth        time.Time `json:"dateOfBirth"`
 	Gender             string    `json:"gender"`
 	Address            Address   `json:"address"`
 	MobileLastDigits   string    `json:"mobileLastDigits"`
@@ -134,10 +130,6 @@ func createDecompressor(data []byte) (io.ReadCloser, error) {
 func (a *AnonAadhaarDataV2) verify() error {
 	if a.SignedTime.IsZero() {
 		return errors.New("signed time is not set")
-	}
-	_, err := time.Parse(timeTemplate, a.DateOfBirth) // DD-MM-YYYY check data format
-	if err != nil {
-		return fmt.Errorf("failed to parse date of birth '%s': %w", a.DateOfBirth, err)
 	}
 	if !IsValidGenderString(GenderString(a.Gender)) {
 		return fmt.Errorf("invalid gender: '%s'", a.Gender)
@@ -177,6 +169,12 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	partsWithoutPhoto := parts[:18]
 	photo := parts[18:]
 
+	// convert dob to time
+	dob, err := time.Parse(mm_dd_yyyy_template, string(partsWithoutPhoto[4]))
+	if err != nil {
+		return fmt.Errorf("failed to parse date of birth '%s': %w", string(partsWithoutPhoto[4]), err)
+	}
+
 	a.Version = string(partsWithoutPhoto[0])
 	a.ContactIndecator = string(partsWithoutPhoto[1])
 	a.ReferenceID = string(partsWithoutPhoto[2])
@@ -186,9 +184,9 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 		return fmt.Errorf("failed to parse signed time '%s': %w",
 			string(partsWithoutPhoto[2][4:14]), err)
 	}
-	a.SignedTime = sigtime.Add(-ISTOffset * time.Second)
+	a.SignedTime = sigtime.Add(-istOffset * time.Second)
 	a.Name = string(partsWithoutPhoto[3])
-	a.DateOfBirth = string(partsWithoutPhoto[4])
+	a.DateOfBirth = dob
 	a.Gender = string(partsWithoutPhoto[5])
 	a.Address = Address{
 		CareOf:      string(partsWithoutPhoto[6]),
@@ -223,164 +221,4 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	}
 
 	return nil
-}
-
-type VC struct {
-	Address        string
-	Birthday       int
-	Gender         string
-	Name           string
-	ReferenceID    string
-	IssuanceDate   time.Time
-	ExpirationDate time.Time
-}
-
-func NewVC(data *AnonAadhaarDataV2) (*VC, error) {
-	if err := data.verify(); err != nil {
-		return nil, fmt.Errorf("failed to verify data: %w", err)
-	}
-
-	t, _ := time.Parse(timeTemplate, data.DateOfBirth)
-	birthday := t.Year()*10000 + int(t.Month())*100 + t.Day()
-	expirationDate := data.SignedTime.Add(halfYearSeconds * time.Second)
-
-	return &VC{
-		Address:     data.Address.String(),
-		Birthday:    birthday,
-		Gender:      data.Gender,
-		Name:        data.Name,
-		ReferenceID: data.ReferenceID,
-
-		IssuanceDate:   data.SignedTime,
-		ExpirationDate: expirationDate,
-	}, nil
-}
-
-type QrInputs struct {
-	Birthday                 *big.Int
-	FirstName                *big.Int
-	FullName                 *big.Int
-	Gender                   *big.Int
-	GovernmentIdentifier     *big.Int
-	GovernmentIdentifierType *big.Int
-	AddressFirstLine         *big.Int
-	IssuanceDate             *big.Int
-	ExpirationDate           *big.Int
-	DataPadded               []string
-	DataPaddedLen            int
-	DelimiterIndices         []int
-	Signature                []string
-}
-
-func NewQRInputs(data *AnonAadhaarDataV2) (*QrInputs, error) {
-	if err := data.verify(); err != nil {
-		return nil, fmt.Errorf("failed to verify data: %w", err)
-	}
-
-	t, _ := time.Parse(timeTemplate, data.DateOfBirth)
-	birthday := big.NewInt(
-		int64(t.Year()*10000 + int(t.Month())*100 + t.Day()),
-	)
-
-	expirationDate := data.SignedTime.Add(halfYearSeconds * time.Second)
-	issuanceDateNano := new(big.Int).Mul(
-		big.NewInt(0).SetInt64(
-			data.SignedTime.Unix()), big.NewInt(1e9))
-	expirationDateNano := new(big.Int).Mul(
-		big.NewInt(0).SetInt64(
-			expirationDate.Unix()), big.NewInt(1e9))
-
-	dataPadded, dataPaddedLen, err := sha256Pad(data.rawdata, 512*3)
-	if err != nil {
-		return nil, fmt.Errorf("failed to pad data: %w", err)
-	}
-
-	var delimiterIndices []int
-	for i, b := range data.rawdata {
-		if b == 255 {
-			delimiterIndices = append(delimiterIndices, i)
-		}
-		if len(delimiterIndices) == 18 {
-			break
-		}
-	}
-
-	signatureParts, err := splitToWords(
-		big.NewInt(0).SetBytes(data.signature),
-		big.NewInt(121),
-		big.NewInt(17),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to split signature: %w", err)
-	}
-
-	addressHash, err := poseidon.HashBytes([]byte(data.Address.String()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash(address): %w", err)
-	}
-	genderHash, err := poseidon.HashBytes([]byte(data.Gender))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash(gender): %w", err)
-	}
-	nameHash, err := poseidon.HashBytes([]byte(data.Name))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash(name): %w", err)
-	}
-	referenceIDHash, err := poseidon.HashBytes([]byte(data.ReferenceID))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse referenceID '%s': %w", data.ReferenceID, err)
-	}
-
-	identifierTypeHash, err := poseidon.HashBytes([]byte("other"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash(identifierType): %w", err)
-	}
-
-	return &QrInputs{
-		Birthday:                 birthday,
-		FirstName:                nameHash,
-		FullName:                 nameHash,
-		Gender:                   genderHash,
-		GovernmentIdentifier:     referenceIDHash,
-		GovernmentIdentifierType: identifierTypeHash,
-		AddressFirstLine:         addressHash,
-
-		IssuanceDate:     issuanceDateNano,
-		ExpirationDate:   expirationDateNano,
-		DataPadded:       uint8ArrayToCharArray(dataPadded),
-		DataPaddedLen:    dataPaddedLen,
-		DelimiterIndices: delimiterIndices,
-		Signature:        toString(signatureParts),
-	}, nil
-}
-
-// golang implementation of sha256Pad from zk-email helpers
-// https://github.com/zkemail/zk-email-verify/blob/e1084969fbee16317290e4380b3837af74fea616/packages/helpers/src/sha-utils.ts#L88
-func sha256Pad(m []byte, maxShaBytes int) (paddedMessage []byte, messageLen int, err error) {
-	// do not modify the original message
-	message := make([]byte, len(m))
-	copy(message, m)
-
-	msgLen := len(message) * 8
-	msgLenBytes := int64ToBytes(int64(msgLen))
-
-	paddedMessage = append(message, 0x80)
-	for ((len(paddedMessage)*8 + len(msgLenBytes)*8) % 512) != 0 {
-		paddedMessage = append(paddedMessage, 0x00)
-	}
-
-	paddedMessage = append(paddedMessage, msgLenBytes...)
-	if len(paddedMessage)*8%512 != 0 {
-		return nil, 0, errors.New("padding did not complete properly")
-	}
-
-	messageLen = len(paddedMessage)
-	for len(paddedMessage) < maxShaBytes {
-		paddedMessage = append(paddedMessage, int64ToBytes(0)...)
-	}
-	if len(paddedMessage) != maxShaBytes {
-		return nil, 0, fmt.Errorf("padding to max length did not complete properly: got %d, expected %d", len(paddedMessage), maxShaBytes)
-	}
-
-	return paddedMessage, messageLen, nil
 }

@@ -1,12 +1,11 @@
-package gocircuitexternal
+package anonaadhaar
 
 import (
-	"bytes"
-	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/big"
-	"strconv"
 
+	"github.com/0xPolygonID/go-circuit-external/common"
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
@@ -51,32 +50,33 @@ func extractNfromPubKey(content []byte) (*big.Int, error) {
 	return new(big.Int).SetBytes(n), nil
 }
 
-func toString(b []*big.Int) []string {
-	v := make([]string, len(b))
-	for i := range b {
-		v[i] = b[i].String()
-	}
-	return v
-}
+// golang implementation of sha256Pad from zk-email helpers
+// https://github.com/zkemail/zk-email-verify/blob/e1084969fbee16317290e4380b3837af74fea616/packages/helpers/src/sha-utils.ts#L88
+func sha256Pad(m []byte, maxShaBytes int) (paddedMessage []byte, messageLen int, err error) {
+	// do not modify the original message
+	message := make([]byte, len(m))
+	copy(message, m)
 
-func mustBigInt(s string) *big.Int {
-	i, ok := new(big.Int).SetString(s, 10)
-	if !ok {
-		panic(fmt.Sprintf("failed to parse big.Int: %s", s))
-	}
-	return i
-}
+	msgLen := len(message) * 8
+	msgLenBytes := common.Int64ToBytes(int64(msgLen))
 
-func int64ToBytes(value int64) []byte {
-	buf := new(bytes.Buffer)
-	_ = binary.Write(buf, binary.BigEndian, value)
-	return buf.Bytes()
-}
-
-func uint8ArrayToCharArray(a []uint8) []string {
-	charArray := make([]string, len(a))
-	for i, v := range a {
-		charArray[i] = strconv.Itoa(int(v))
+	paddedMessage = append(message, 0x80)
+	for ((len(paddedMessage)*8 + len(msgLenBytes)*8) % 512) != 0 {
+		paddedMessage = append(paddedMessage, 0x00)
 	}
-	return charArray
+
+	paddedMessage = append(paddedMessage, msgLenBytes...)
+	if len(paddedMessage)*8%512 != 0 {
+		return nil, 0, errors.New("padding did not complete properly")
+	}
+
+	messageLen = len(paddedMessage)
+	for len(paddedMessage) < maxShaBytes {
+		paddedMessage = append(paddedMessage, common.Int64ToBytes(0)...)
+	}
+	if len(paddedMessage) != maxShaBytes {
+		return nil, 0, fmt.Errorf("padding to max length did not complete properly: got %d, expected %d", len(paddedMessage), maxShaBytes)
+	}
+
+	return paddedMessage, messageLen, nil
 }

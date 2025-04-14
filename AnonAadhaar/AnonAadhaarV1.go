@@ -1,26 +1,52 @@
-package gocircuitexternal
+package anonaadhaar
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/big"
 	"reflect"
 	"strconv"
+	"time"
 
-	"github.com/google/uuid"
+	"github.com/0xPolygonID/go-circuit-external/common"
+	"github.com/0xPolygonID/go-circuit-external/template"
+	basicPerson "github.com/0xPolygonID/go-circuit-external/template/templates/basicPersonV1_43"
 	"github.com/iden3/go-circuits/v2"
-	core "github.com/iden3/go-iden3-core/v2"
-	"github.com/iden3/go-iden3-core/v2/w3c"
-	"github.com/iden3/go-schema-processor/v2/merklize"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
 )
 
 const (
-	AnonAadhaarV1 circuits.CircuitID = "anonAadhaarV1"
+	templateSize    = 14
+	halfYearSeconds = 15776640 // 6 months in seconds. Equalt to circuit implementation
 
-	aadhaarJSONLD = "ipfs://QmZbsTnRwtCmbdg3r9o7Txid37LmvPcvmzVi1Abvqu1WKL"
-	aadhaarSchema = "ipfs://QmTojMfyzxehCJVw7aUrdWuxdF68R7oLYooGHCUr9wwsef"
+	AnonAadhaarV1 circuits.CircuitID = "anonAadhaarV1"
 )
+
+var (
+	zero = big.NewInt(0)
+
+	anonAadhaarTemplate = []template.Node{
+		template.Node{basicPerson.DateOfBirth, zero},
+		template.Node{basicPerson.FirstName, zero},
+		template.Node{basicPerson.FullName, zero},
+		template.Node{basicPerson.Gender, zero},
+		template.Node{basicPerson.GovernmentIdentifier, zero},
+		template.Node{basicPerson.GovernmentIdentifierType, zero},
+		template.Node{basicPerson.RevocationNonce, zero},
+		template.Node{basicPerson.AddressLine1, zero},
+		template.Node{basicPerson.CredentialStatusID, zero},
+		template.Node{basicPerson.CredentialSubjectID, zero},
+		template.Node{basicPerson.ExpirationDate, zero},
+		template.Node{basicPerson.IssuanceDate, zero},
+		template.Node{basicPerson.Issuer, zero},
+	}
+)
+
+func calculateDOE(issuanceDate time.Time) time.Time {
+	expirationDate := issuanceDate.Add(halfYearSeconds * time.Second)
+	return expirationDate
+}
 
 type AnonAadhaarV1Inputs struct {
 	QRData *big.Int `json:"qrData"`
@@ -54,64 +80,132 @@ type anonAadhaarV1CircuitInputs struct {
 }
 
 func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
-	ah := &AnonAadhaarDataV2{}
-	err := ah.UnmarshalQR(a.QRData)
+	QR := &AnonAadhaarDataV2{}
+	err := QR.UnmarshalQR(a.QRData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal QRData: %w", err)
 	}
-	vcpayload, err := NewVC(ah)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create QRInputs: %w", err)
-	}
-	// TODO (illia-korotia): we need to match credential subject to JSON schema
-	return &verifiable.W3CCredential{
-		ID: fmt.Sprintf("urn:uuid:%s", uuid.New().String()),
-		Context: []string{
-			"https://www.w3.org/2018/credentials/v1",
-			"https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
-			aadhaarJSONLD,
-		},
-		Type: []string{
-			"VerifiableCredential",
-			"BasicPerson",
-		},
-		IssuanceDate: &vcpayload.IssuanceDate,
-		Expiration:   &vcpayload.ExpirationDate,
-		CredentialSubject: map[string]interface{}{
-			"id":                       a.CredentialSubjectID,
-			"fullName":                 vcpayload.Name,
-			"firstName":                vcpayload.Name,
-			"dateOfBirth":              vcpayload.Birthday,
-			"governmentIdentifier":     vcpayload.ReferenceID,
-			"governmentIdentifierType": "other",
-			"gender":                   vcpayload.Gender,
-			"addresses": map[string]interface{}{
-				"primaryAddress": map[string]interface{}{
-					"addressLine1": vcpayload.Address,
-				},
+
+	credentialSubject := map[string]interface{}{
+		"id":                       a.CredentialSubjectID,
+		"fullName":                 QR.Name,
+		"firstName":                QR.Name,
+		"dateOfBirth":              common.TimeToInt(QR.DateOfBirth),
+		"governmentIdentifier":     QR.ReferenceID,
+		"governmentIdentifierType": "other",
+		"gender":                   QR.Gender,
+		"addresses": map[string]interface{}{
+			"primaryAddress": map[string]interface{}{
+				"addressLine1": QR.Address.String(),
 			},
-			"type": "BasicPerson",
 		},
-		CredentialStatus: &verifiable.CredentialStatus{
-			ID: a.CredentialStatusID,
-			//nolint:gosec // this is a nonce
-			RevocationNonce: uint64(a.CredentialStatusRevocationNonce),
-			Type:            "Iden3OnchainSparseMerkleTreeProof2023",
-		},
-		Issuer: a.IssuerID,
-		CredentialSchema: verifiable.CredentialSchema{
-			ID:   aadhaarSchema,
-			Type: "JsonSchema2023",
-		},
-	}, nil
+		"type": basicPerson.BasicPersonV1_43_Type,
+	}
+	credentialStatus := &verifiable.CredentialStatus{
+		ID: a.CredentialStatusID,
+		//nolint:gosec // this is a nonce
+		RevocationNonce: uint64(a.CredentialStatusRevocationNonce),
+		Type:            verifiable.Iden3OnchainSparseMerkleTreeProof2023,
+	}
+
+	vc, err := basicPerson.BuildBasicPersonV1_43Credential(
+		credentialSubject,
+		credentialStatus,
+		a.IssuerID,
+		basicPerson.WithIssuanceDate(QR.SignedTime),
+		basicPerson.WithExpiration(calculateDOE(QR.SignedTime)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create credential: %w", err)
+	}
+	return &vc, nil
 }
 
-func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
-	mt, err := newTemplateTree()
+func (a *AnonAadhaarV1Inputs) InputsMarshal(ctx context.Context) ([]byte, error) {
+	tmpl, err := template.New(templateSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create template tree: %w", err)
+		return nil, fmt.Errorf("failed to create template: %w", err)
 	}
-	templateRoot := mt.root()
+	err = tmpl.Upload(ctx, basicPerson.BasicPersonV1_43)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload template 'BasicPersonV1_43': %w", err)
+	}
+	err = tmpl.Upload(ctx, anonAadhaarTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload template 'PassportV1Template': %w", err)
+	}
+	templateRoot := tmpl.Root()
+
+	ah := &AnonAadhaarDataV2{}
+	err = ah.UnmarshalQR(a.QRData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal QRData: %w", err)
+	}
+
+	// List of values to hash
+	valuesToHash := []struct {
+		value string
+		dest  **big.Int
+	}{
+		{ah.Address.String(), new(*big.Int)},
+		{ah.Gender, new(*big.Int)},
+		{ah.Name, new(*big.Int)},
+		{ah.ReferenceID, new(*big.Int)},
+		{"other", new(*big.Int)}, // Identifier type
+		{a.CredentialStatusID, new(*big.Int)},
+		{a.CredentialSubjectID, new(*big.Int)},
+		{a.IssuerID, new(*big.Int)},
+	}
+
+	// Hash all values
+	for _, item := range valuesToHash {
+		*item.dest, err = common.HashValue(item.value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to hash value '%s': %w", item.value, err)
+		}
+	}
+
+	// Assign hashed values
+	addressHash := *valuesToHash[0].dest
+	genderHash := *valuesToHash[1].dest
+	nameHash := *valuesToHash[2].dest
+	referenceIDHash := *valuesToHash[3].dest
+	identifierTypeHash := *valuesToHash[4].dest
+	credentialStatusID := *valuesToHash[5].dest
+	credentialSubjetID := *valuesToHash[6].dest
+	issuer := *valuesToHash[7].dest
+
+	userID, err := common.DIDToID(a.CredentialSubjectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert did to id: %w", err)
+	}
+
+	siblings, err := tmpl.Update(ctx, []template.Node{
+		template.Node{
+			basicPerson.DateOfBirth,
+			big.NewInt(int64(common.TimeToInt(ah.DateOfBirth))),
+		},
+		template.Node{basicPerson.FirstName, nameHash},
+		template.Node{basicPerson.FullName, nameHash},
+		template.Node{basicPerson.Gender, genderHash},
+		template.Node{basicPerson.GovernmentIdentifier, referenceIDHash},
+		template.Node{basicPerson.GovernmentIdentifierType, identifierTypeHash},
+		template.Node{basicPerson.RevocationNonce, big.NewInt(int64(a.CredentialStatusRevocationNonce))},
+		template.Node{basicPerson.AddressLine1, addressHash},
+		template.Node{basicPerson.CredentialStatusID, credentialStatusID},
+		template.Node{basicPerson.CredentialSubjectID, credentialSubjetID},
+		template.Node{
+			basicPerson.ExpirationDate,
+			common.TimeToUnixNano(calculateDOE(ah.SignedTime)),
+		},
+		template.Node{basicPerson.IssuanceDate, common.TimeToUnixNano(ah.SignedTime)},
+		template.Node{basicPerson.Issuer, issuer},
+	})
+
+	qrParts, err := prepareInputs(ah)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare inputs: %w", err)
+	}
 
 	p, err := extractNfromPubKey([]byte(a.PubKey))
 	if err != nil {
@@ -122,84 +216,22 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		return nil, fmt.Errorf("failed to split pubkey: %w", err)
 	}
 
-	ah := &AnonAadhaarDataV2{}
-	err = ah.UnmarshalQR(a.QRData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal QRData: %w", err)
-	}
-	qrInputs, err := NewQRInputs(ah)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create QRInputs: %w", err)
-	}
-
-	credentialStatusID, err := hashvalue(a.CredentialStatusID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash credentialStatusID: %w", err)
-	}
-	credentialSubjetID, err := hashvalue(a.CredentialSubjectID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash credentialSubjectID for credential: %w", err)
-	}
-	userDID, err := w3c.ParseDID(a.CredentialSubjectID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse credentialSubjectID for claim: %w", err)
-	}
-	userID, err := core.IDFromDID(*userDID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get userID: %w", err)
-	}
-
-	issuer, err := hashvalue(a.IssuerID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash issuer: %w", err)
-	}
-
-	proofs, err := mt.update(updateValues{
-		Birthday:                 qrInputs.Birthday,
-		FirstName:                qrInputs.FirstName,
-		FullName:                 qrInputs.FullName,
-		Gender:                   qrInputs.Gender,
-		GovernmentIdentifier:     qrInputs.GovernmentIdentifier,
-		GovernmentIdentifierType: qrInputs.GovernmentIdentifierType,
-		RevocationNonce:          big.NewInt(int64(a.CredentialStatusRevocationNonce)),
-		AddressFirstLine:         qrInputs.AddressFirstLine,
-		CredentialStatusID:       credentialStatusID,
-		CredentialSubjectID:      credentialSubjetID,
-		ExpirationDate:           qrInputs.ExpirationDate,
-		IssuanceDate:             qrInputs.IssuanceDate,
-		Issuer:                   issuer,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to update template tree: %w", err)
-	}
-
-	updateSyblings := make([][]string, 0, len(proofs))
-	for _, p := range proofs {
-		// golnag library generates one extra sibling
-		// that is not needed for the circuit
-		// the last sibling should be 0 all the time
-		if p.Siblings[len(p.Siblings)-1].BigInt().Cmp(big.NewInt(0)) != 0 {
-			return nil, fmt.Errorf("last sibling should be 0")
-		}
-		updateSyblings = append(updateSyblings, circuits.PrepareSiblingsStr(p.Siblings[:treeLevel], treeLevel))
-	}
-
 	inputs := anonAadhaarV1CircuitInputs{
-		QRDataPadded:        qrInputs.DataPadded,
-		QRDataPaddedLength:  qrInputs.DataPaddedLen,
-		DelimiterIndices:    qrInputs.DelimiterIndices,
-		Signature:           qrInputs.Signature,
-		PubKey:              toString(pk),
+		QRDataPadded:        qrParts.dataPadded,
+		QRDataPaddedLength:  qrParts.dataPaddedLen,
+		DelimiterIndices:    qrParts.delimiterIndices,
+		Signature:           qrParts.signature,
+		PubKey:              common.BigIntListToStrings(pk),
 		NullifierSeed:       a.NullifierSeed,
 		SignalHash:          a.SignalHash,
 		RevocationNonce:     a.CredentialStatusRevocationNonce,
 		CredentialStatusID:  credentialStatusID.String(),
 		CredentialSubjectID: credentialSubjetID.String(),
 		UserID:              userID.BigInt().String(),
-		ExpirationTime:      halfYearSeconds,
+		ExpirationTime:      halfYearSeconds, // how seconds added to signed time in circuit
 		Issuer:              issuer.String(),
 		TemplateRoot:        templateRoot.String(),
-		Siblings:            updateSyblings,
+		Siblings:            common.ConvertSiblings(siblings),
 	}
 
 	jsonBytes, err := json.Marshal(inputs)
@@ -208,18 +240,6 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 	}
 
 	return jsonBytes, nil
-}
-
-func hashvalue(v interface{}) (*big.Int, error) {
-	mv, err := merklize.NewValue(merklize.PoseidonHasher{}, v)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create init merklizer: %w", err)
-	}
-	bv, err := mv.MtEntry()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create merklize entry: %w", err)
-	}
-	return bv, nil
 }
 
 // AnonAadhaarV1PubSignals public inputs
@@ -299,4 +319,48 @@ func (a *AnonAadhaarV1PubSignals) GetObjMap() map[string]interface{} {
 		}
 	}
 	return out
+}
+
+type qrParts struct {
+	dataPadded       []string
+	dataPaddedLen    int
+	delimiterIndices []int
+	signature        []string
+}
+
+func prepareInputs(data *AnonAadhaarDataV2) (*qrParts, error) {
+	if err := data.verify(); err != nil {
+		return nil, fmt.Errorf("failed to verify data: %w", err)
+	}
+
+	dataPadded, dataPaddedLen, err := sha256Pad(data.rawdata, 512*3)
+	if err != nil {
+		return nil, fmt.Errorf("failed to pad data: %w", err)
+	}
+
+	var delimiterIndices []int
+	for i, b := range data.rawdata {
+		if b == 255 {
+			delimiterIndices = append(delimiterIndices, i)
+		}
+		if len(delimiterIndices) == 18 {
+			break
+		}
+	}
+
+	signatureParts, err := splitToWords(
+		big.NewInt(0).SetBytes(data.signature),
+		big.NewInt(121),
+		big.NewInt(17),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to split signature: %w", err)
+	}
+
+	return &qrParts{
+		dataPadded:       common.Uint8ArrayToCharArray(dataPadded),
+		dataPaddedLen:    dataPaddedLen,
+		delimiterIndices: delimiterIndices,
+		signature:        common.BigIntListToStrings(signatureParts),
+	}, nil
 }

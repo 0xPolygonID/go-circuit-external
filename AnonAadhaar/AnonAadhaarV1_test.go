@@ -1,6 +1,7 @@
-package gocircuitexternal
+package anonaadhaar
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -37,7 +38,7 @@ Q5I3LVZhZ3abc1uhLKNYD5GcG9i6cMTCqwrPKwm8L66YHzwClabh6fJI9QBzCU/6
 		SignalHash:    1001,
 	}
 
-	inputsMarshal, err := inputs.InputsMarshal()
+	inputsMarshal, err := inputs.InputsMarshal(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, inputsMarshal)
 	debugLog(t, string(inputsMarshal))
@@ -71,7 +72,7 @@ Q5I3LVZhZ3abc1uhLKNYD5GcG9i6cMTCqwrPKwm8L66YHzwClabh6fJI9QBzCU/6
 		SignalHash:    1001,
 	}
 
-	inputsMarshal, err := inputs.InputsMarshal()
+	inputsMarshal, err := inputs.InputsMarshal(context.Background())
 	require.NoError(t, err)
 	fmt.Println("circuit inputs:", string(inputsMarshal))
 
