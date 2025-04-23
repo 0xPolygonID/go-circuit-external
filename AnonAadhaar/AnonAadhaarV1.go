@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	templateSize    = 14
+	templateSize    = 9
 	halfYearSeconds = 15776640 // 6 months in seconds. Equalt to circuit implementation
 
 	AnonAadhaarV1 circuits.CircuitID = "anonAadhaarV1"
@@ -28,7 +28,6 @@ var (
 
 	anonAadhaarTemplate = []template.Node{
 		{basicPerson.DateOfBirth, zero},
-		{basicPerson.FirstName, zero},
 		{basicPerson.FullName, zero},
 		{basicPerson.Gender, zero},
 		{basicPerson.GovernmentIdentifier, zero},
@@ -89,7 +88,6 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 	credentialSubject := map[string]interface{}{
 		"id":                       a.CredentialSubjectID,
 		"fullName":                 QR.Name,
-		"firstName":                QR.Name,
 		"dateOfBirth":              common.TimeToInt(QR.DateOfBirth),
 		"governmentIdentifier":     QR.ReferenceID,
 		"governmentIdentifierType": "other",
@@ -186,7 +184,6 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 			basicPerson.DateOfBirth,
 			big.NewInt(int64(common.TimeToInt(ah.DateOfBirth))),
 		},
-		{basicPerson.FirstName, nameHash},
 		{basicPerson.FullName, nameHash},
 		{basicPerson.Gender, genderHash},
 		{basicPerson.GovernmentIdentifier, referenceIDHash},

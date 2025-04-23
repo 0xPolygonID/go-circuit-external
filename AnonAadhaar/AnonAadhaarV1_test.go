@@ -123,7 +123,6 @@ func TestW3CCredential(t *testing.T) {
       }
     },
     "dateOfBirth": 19840101,
-    "firstName": "Sumit Kumar",
     "fullName": "Sumit Kumar",
     "gender": "M",
     "governmentIdentifier": "269720190308114407437",
