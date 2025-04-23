@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	templateSize = 13
+	templateSize = 8
 
 	//nolint:gosec // This is names of algorithms
 	CredentialSHA1 = "credential_sha1"
@@ -35,7 +35,6 @@ var (
 	passportTemplate = []template.Node{
 		{basicPerson.DateOfBirth, zero},
 		{basicPerson.DocumentExpirationDate, zero},
-		{basicPerson.FirstName, zero},
 		{basicPerson.FullName, zero},
 		{basicPerson.GovernmentIdentifier, zero},
 		{basicPerson.GovernmentIdentifierType, zero},
@@ -101,7 +100,6 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 	credentialSubject := map[string]interface{}{
 		"dateOfBirth":              common.TimeToInt(dobTime),
 		"documentExpirationDate":   common.TimeToInt(doeTime),
-		"firstName":                dg1.HolderName,
 		"fullName":                 dg1.HolderName,
 		"governmentIdentifier":     dg1.DocumentNumber,
 		"governmentIdentifierType": dg1.DocumentType,
@@ -170,7 +168,6 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 		dest  **big.Int
 	}{
 		{dg1.HolderName, new(*big.Int)},
-		{dg1.HolderName, new(*big.Int)},
 		{dg1.DocumentNumber, new(*big.Int)},
 		{dg1.DocumentType, new(*big.Int)},
 		{string(dg1.Sex), new(*big.Int)},
@@ -190,16 +187,15 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 	}
 
 	// Assign hashed values
-	firstNameHash := *valuesToHash[0].dest
-	fullNameHash := *valuesToHash[1].dest
-	govermentIdentifierHash := *valuesToHash[2].dest
-	govermentIdentifierTypeHash := *valuesToHash[3].dest
-	sexHash := *valuesToHash[4].dest
-	notionalityHash := *valuesToHash[5].dest
-	issuingCountryHash := *valuesToHash[6].dest
-	credentialStatusID := *valuesToHash[7].dest
-	credentialSubjetID := *valuesToHash[8].dest
-	issuer := *valuesToHash[9].dest
+	fullNameHash := *valuesToHash[0].dest
+	govermentIdentifierHash := *valuesToHash[1].dest
+	govermentIdentifierTypeHash := *valuesToHash[2].dest
+	sexHash := *valuesToHash[3].dest
+	notionalityHash := *valuesToHash[4].dest
+	issuingCountryHash := *valuesToHash[5].dest
+	credentialStatusID := *valuesToHash[6].dest
+	credentialSubjetID := *valuesToHash[7].dest
+	issuer := *valuesToHash[8].dest
 
 	siblings, err := tmpl.Update(ctx, []template.Node{
 		{
@@ -210,7 +206,6 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 			basicPerson.DocumentExpirationDate,
 			big.NewInt(int64(common.TimeToInt(doeTime))),
 		},
-		{basicPerson.FirstName, firstNameHash},
 		{basicPerson.FullName, fullNameHash},
 		{basicPerson.GovernmentIdentifier, govermentIdentifierHash},
 		{basicPerson.GovernmentIdentifierType, govermentIdentifierTypeHash},
