@@ -29,8 +29,7 @@ func TestParseDG1(t *testing.T) {
 				DocumentType:   "P",
 				IssuingCountry: "UKR",
 				DocumentNumber: "AC1234567",
-				FirstName:      "VALERIY",
-				FullName:       "KUZNETSOV",
+				HolderName:     "KUZNETSOV  VALERIY",
 				Nationality:    "UKR",
 				DateOfBirth:    "960309",
 				Sex:            Male,
@@ -44,8 +43,7 @@ func TestParseDG1(t *testing.T) {
 				DocumentType:   "P",
 				IssuingCountry: "UKR",
 				DocumentNumber: "AC1234567",
-				FirstName:      "VALERIY ALEX",
-				FullName:       "KUZNETSOV MELENDEZ",
+				HolderName:     "KUZNETSOV MELENDEZ  VALERIY ALEX",
 				Nationality:    "UKR",
 				DateOfBirth:    "960309",
 				Sex:            Male,
@@ -73,8 +71,7 @@ func TestParseDG1(t *testing.T) {
 				result.DocumentNumber,
 				"DocumentNumber mismatch",
 			)
-			require.Equal(t, tt.expected.FirstName, result.FirstName, "FirstName mismatch")
-			require.Equal(t, tt.expected.FullName, result.FullName, "FullName mismatch")
+			require.Equal(t, tt.expected.HolderName, result.HolderName, "HolderName mismatch")
 			require.Equal(t, tt.expected.Nationality, result.Nationality, "Nationality mismatch")
 			require.Equal(t, tt.expected.DateOfBirth, result.DateOfBirth, "DateOfBirth mismatch")
 			require.Equal(t, tt.expected.Sex, result.Sex, "Sex mismatch")

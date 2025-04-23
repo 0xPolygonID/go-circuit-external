@@ -24,8 +24,7 @@ type Passport struct {
 	DocumentType       string // Document type (P for passport)
 	IssuingCountry     string // Country code of the issuing state
 	DocumentNumber     string // Passport number
-	FirstName          string // Holder's names (given names)
-	FullName           string // Holder's surname
+	HolderName         string // Full name of the holder
 	Nationality        string // Nationality of the holder
 	DateOfBirth        string // Date of birth in YYMMDD format
 	Sex                Sex    // Sex (M, F or X)
@@ -79,8 +78,7 @@ func ParseDG1(data string) (*Passport, error) {
 	passport := &Passport{
 		DocumentType:       trimPlaceholder(line1[:1]),
 		IssuingCountry:     trimPlaceholder(line1[2:5]),
-		FirstName:          parseNames(line1[5:44]),
-		FullName:           parseSurname(line1[5:44]),
+		HolderName:         parseHolderName(line1[5:44]),
 		DocumentNumber:     trimPlaceholder(line2[:9]),
 		CheckDigitNumber:   trimPlaceholder(line2[9:10]),
 		Nationality:        trimPlaceholder(line2[10:13]),
@@ -98,30 +96,13 @@ func ParseDG1(data string) (*Passport, error) {
 	return passport, nil
 }
 
-// parseNames extracts given names from the name field.
-func parseNames(nameField string) string {
-	// Names come after the surname in the format "SURNAME<<FIRSTNAME<MIDDLENAME"
-	parts := strings.Split(nameField, "<<")
-	if len(parts) < 2 {
-		return ""
-	}
-
-	// Replace < with spaces in the given names
-	return strings.ReplaceAll(parts[1], "<", " ")
-}
-
-// parseSurname extracts the surname from the name field.
-func parseSurname(nameField string) string {
-	parts := strings.Split(nameField, "<<")
-	if len(parts) == 0 {
-		return ""
-	}
-
-	// Replace < with spaces in surname to handle multiple surnames
-	return strings.ReplaceAll(parts[0], "<", " ")
+func parseHolderName(holder string) string {
+	return strings.TrimSpace(
+		strings.ReplaceAll(holder, "<", " "),
+	)
 }
 
 func trimPlaceholder(value string) string {
 	// Remove placeholder characters (e.g., <) from the value
-	return strings.TrimSuffix(value, "<")
+	return strings.TrimRight(value, "<")
 }

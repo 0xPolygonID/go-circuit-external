@@ -65,8 +65,7 @@ type PassportV1Inputs struct {
 
 type anonAadhaarV1CircuitInputs struct {
 	DG1                 []int      `json:"dg1"`
-	LastNameSize        int        `json:"lastNameSize"`
-	FirstNameSize       int        `json:"firstNameSize"`
+	HolderNameSize      int        `json:"holderNameSize"`
 	CurrentDate         string     `json:"currentDate"` // format: YYMMDD
 	RevocationNonce     int        `json:"revocationNonce"`
 	CredentialStatusID  string     `json:"credentialStatusID"`
@@ -102,8 +101,8 @@ func (a *PassportV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 	credentialSubject := map[string]interface{}{
 		"dateOfBirth":              common.TimeToInt(dobTime),
 		"documentExpirationDate":   common.TimeToInt(doeTime),
-		"firstName":                dg1.FirstName,
-		"fullName":                 dg1.FullName,
+		"firstName":                dg1.HolderName,
+		"fullName":                 dg1.HolderName,
 		"governmentIdentifier":     dg1.DocumentNumber,
 		"governmentIdentifierType": dg1.DocumentType,
 		"sex":                      dg1.Sex,
@@ -170,8 +169,8 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 		value string
 		dest  **big.Int
 	}{
-		{dg1.FirstName, new(*big.Int)},
-		{dg1.FullName, new(*big.Int)},
+		{dg1.HolderName, new(*big.Int)},
+		{dg1.HolderName, new(*big.Int)},
 		{dg1.DocumentNumber, new(*big.Int)},
 		{dg1.DocumentType, new(*big.Int)},
 		{string(dg1.Sex), new(*big.Int)},
@@ -236,8 +235,7 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 
 	inputs := anonAadhaarV1CircuitInputs{
 		DG1:                 toIntsArray(dg1.Raw),
-		LastNameSize:        len(dg1.FullName),
-		FirstNameSize:       len(dg1.FirstName),
+		HolderNameSize:      len(dg1.HolderName),
 		CurrentDate:         timeNow.Format("060102"),
 		RevocationNonce:     a.CredentialStatusRevocationNonce,
 		CredentialStatusID:  credentialStatusID.String(),

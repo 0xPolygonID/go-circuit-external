@@ -25,8 +25,8 @@ func TestW3CCredential(t *testing.T) {
   "credentialSubject": {
     "dateOfBirth": 19960309,
     "documentExpirationDate": 20350803,
-    "firstName": "VALERIY",
-    "fullName": "KUZNETSOV",
+    "firstName": "KUZNETSOV  VALERIY",
+    "fullName": "KUZNETSOV  VALERIY",
     "governmentIdentifier": "AC1234567",
     "governmentIdentifierType": "P",
     "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
