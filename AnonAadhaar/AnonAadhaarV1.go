@@ -39,7 +39,10 @@ var (
 		{basicPerson.ExpirationDate, zero},
 		{basicPerson.IssuanceDate, zero},
 		{basicPerson.Issuer, zero},
+		{basicPerson.DocumentIssuer, zero},
 	}
+
+	countryOfIssuance = "IND" // iso3166 country code for India
 )
 
 func calculateDOE(issuanceDate time.Time) time.Time {
@@ -96,6 +99,9 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 			"primaryAddress": map[string]interface{}{
 				"addressLine1": QR.Address.String(),
 			},
+		},
+		"nationalities": map[string]interface{}{
+			"nationality2CountryCode": countryOfIssuance,
 		},
 		"type": basicPerson.BasicPersonV1_43_Type,
 	}
@@ -154,6 +160,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		{a.CredentialStatusID, new(*big.Int)},
 		{a.CredentialSubjectID, new(*big.Int)},
 		{a.IssuerID, new(*big.Int)},
+		{countryOfIssuance, new(*big.Int)},
 	}
 
 	// Hash all values
@@ -173,6 +180,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 	credentialStatusID := *valuesToHash[5].dest
 	credentialSubjetID := *valuesToHash[6].dest
 	issuer := *valuesToHash[7].dest
+	countryOfIssuanceHash := *valuesToHash[8].dest
 
 	userID, err := common.DIDToID(a.CredentialSubjectID)
 	if err != nil {
@@ -198,6 +206,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		},
 		{basicPerson.IssuanceDate, common.TimeToUnixNano(ah.SignedTime)},
 		{basicPerson.Issuer, issuer},
+		{basicPerson.DocumentIssuer, countryOfIssuanceHash},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update template: %w", err)

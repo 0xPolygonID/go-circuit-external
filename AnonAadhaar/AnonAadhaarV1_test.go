@@ -20,7 +20,7 @@ func TestAnonAadhaarInputsMarshalV1(t *testing.T) {
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: 0,
-		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
+		CredentialStatusID:              "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
 BAVbKt9G3HGcVrWO7hmZle+hoyVHEGIKx4Ael29E475FTbDxkOP31ONZiXIRc0Te
@@ -128,6 +128,9 @@ func TestW3CCredential(t *testing.T) {
     "governmentIdentifier": "269720190308114407437",
     "governmentIdentifierType": "other",
     "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
+	"nationalities": {
+		"nationality2CountryCode": "IND"
+	},
     "type": "BasicPerson"
   },
   "credentialStatus": {
