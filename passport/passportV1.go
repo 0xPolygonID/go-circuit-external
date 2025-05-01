@@ -223,7 +223,7 @@ func (a *PassportV1Inputs) InputsMarshal() ([]byte, error) {
 		return nil, fmt.Errorf("failed to update template: %w", err)
 	}
 
-	userID, err := common.DIDToID(a.CredentialStatusID)
+	userID, err := common.DIDToID(a.CredentialSubjectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert issuer did to id: %w", err)
 	}
