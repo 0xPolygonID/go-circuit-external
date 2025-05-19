@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +20,7 @@ func TestAnonAadhaarInputsMarshalV1(t *testing.T) {
 		QRData:                          bi,
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-		CredentialStatusRevocationNonce: 0,
+		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
 		CredentialStatusID:              "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
@@ -52,7 +53,7 @@ func TestLatestQR(t *testing.T) {
 		QRData:                          qrDataBI,
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-		CredentialStatusRevocationNonce: 0,
+		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
 		CredentialStatusID:              "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
@@ -88,16 +89,18 @@ func TestAnonAadhaarPubSignalsUnmarshaling(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := AnonAadhaarV1PubSignals{
-		PubKeyHash:     "15134874015316324267425466444584014077184337590635665158241104437045239495873",
-		Nullifier:      "13792722941242764378445679844135477643191022697918865872402525365026957287923",
-		HashIndex:      "14327979508073173495183626111706586439667705770057861972684186859828268989462",
-		HashValue:      "18008128381428548624282039899106504460765785745693349906422544723715663713055",
-		IssuanceDate:   "1552023000",
-		ExpirationDate: "1567799640",
-		NullifierSeed:  12345678,
-		SignalHash:     1001,
-		TemplateRoot:   "14996909320457734110470232238383331296733133167570138119030792979356866472831",
-		IssuerDIDHash:  "12146166192964646439780403715116050536535442384123009131510511003232108502337",
+		PubKeyHash:      "15134874015316324267425466444584014077184337590635665158241104437045239495873",
+		Nullifier:       "13792722941242764378445679844135477643191022697918865872402525365026957287923",
+		HashIndex:       "10644510365202180204064322272684201952394163485620277606458563178505230243908",
+		HashValue:       "3549787391157456624941015862315065613968647737073238907195055324429427602459",
+		IssuanceDate:    "1552023000",
+		ExpirationDate:  "1567799640",
+		QrVersion:       382,
+		NullifierSeed:   12345678,
+		SignalHash:      1001,
+		TemplateRoot:    "5086122537745747254581491345739247223240245653900608092926314604019374578867",
+		IssuerDIDHash:   "12146166192964646439780403715116050536535442384123009131510511003232108502337",
+		RevocationNonce: 1257894000,
 	}
 
 	require.Equal(t, expected, *signals)
@@ -119,7 +122,7 @@ func TestW3CCredential(t *testing.T) {
   "credentialSubject": {
     "addresses": {
       "primaryAddress": {
-        "addressLine1": "C/O Ishwar Chand East Delhi  B-31, 3rd Floor  110051 Krishna Nagar Delhi Radhey Shyam Park Extension Gandhi Nagar Krishna Nagar"
+        "addressLine1": "C/O Ishwar Chand;East Delhi;;B-31, 3rd Floor;;110051;Krishna Nagar;Delhi;Radhey Shyam Park Extension;Gandhi Nagar;Krishna Nagar"
       }
     },
     "dateOfBirth": 19840101,
@@ -136,7 +139,7 @@ func TestW3CCredential(t *testing.T) {
   "credentialStatus": {
     "id": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
     "type": "Iden3OnchainSparseMerkleTreeProof2023",
-    "revocationNonce": 0
+    "revocationNonce": 1257894000
   },
   "issuer": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
   "credentialSchema": {
@@ -151,7 +154,7 @@ func TestW3CCredential(t *testing.T) {
 		QRData:                          bi,
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-		CredentialStatusRevocationNonce: 0,
+		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
 		CredentialStatusID:              "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
 		PubKey: `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY

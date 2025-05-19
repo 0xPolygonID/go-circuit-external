@@ -39,7 +39,7 @@ func TestW3CCredential(t *testing.T) {
   "credentialStatus": {
     "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2\u0026state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
     "type": "Iden3OnchainSparseMerkleTreeProof2023",
-    "revocationNonce": 0
+    "revocationNonce": 1257894000
   },
   "issuer": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
   "credentialSchema": {
@@ -57,7 +57,7 @@ func TestW3CCredential(t *testing.T) {
 		),
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-		CredentialStatusRevocationNonce: 0,
+		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
 		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
 		IssuanceDate:                    issuanceDate.UTC().Unix(),
 		LinkNonce:                       "1",
@@ -82,7 +82,7 @@ func TestInputsMarshal(t *testing.T) {
 		),
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
-		CredentialStatusRevocationNonce: 0,
+		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
 		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
 		IssuanceDate:                    issuanceDate.UTC().Unix(),
 		LinkNonce:                       "1",
@@ -104,12 +104,14 @@ func TestInputsUnmarshal(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := PassportV1PubSignals{
-		HashIndex:    "12540426411710453760151393601170235972829881381898755539806736392337874991081",
-		HashValue:    "20008859012517445819901041236908823100073815023181291226591238728478957482360",
-		LinkID:       "17688680066341107134455191079814377222217258245657465909100070052329567309045",
-		CurrentDate:  "250321",
-		IssuanceDate: "1742578132",
-		TemplateRoot: "3532467563022391950170321692541635800576371972220969617740093781820662149190",
+		HashIndex:       "1974518598251711523366179602153603483276794207550303357764546224847469980483",
+		HashValue:       "7873363841432221179919694201625415296033628866046427442242554673457438568238",
+		LinkID:          "17688680066341107134455191079814377222217258245657465909100070052329567309045",
+		CurrentDate:     "250321",
+		IssuanceDate:    "1742578132",
+		TemplateRoot:    "20928513831198457326281890226858421791230183718399181538736627412475062693938",
+		IssuerDIDHash:   "12146166192964646439780403715116050536535442384123009131510511003232108502337",
+		RevocationNonce: 1257894000,
 	}
 
 	require.Equal(t, expected, *signals)
