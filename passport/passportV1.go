@@ -275,14 +275,14 @@ type PassportV1PubSignals struct {
 // PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals.
 func (a *PassportV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// expected order:
-	// hashIndex - 1
-	// hashValue - 2
-	// linkId - 3
-	// currentDate - 4
-	// issuanceDate - 5
-	// templateRoot - 6
-	// issuerDIDHash - 7
-	// revocationNonce - 8
+	// hashIndex - 0
+	// hashValue - 1
+	// linkId - 2
+	// currentDate - 3
+	// issuanceDate - 4
+	// templateRoot - 5
+	// issuerDIDHash - 6
+	// revocationNonce - 7
 
 	const fieldLength = 8
 
