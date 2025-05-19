@@ -85,7 +85,7 @@ func TestQRData(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		"C/O Ishwar Chand East Delhi  B-31, 3rd Floor  110051 Krishna Nagar Delhi Radhey Shyam Park Extension Gandhi Nagar Krishna Nagar",
+		"C/O Ishwar Chand;East Delhi;;B-31, 3rd Floor;;110051;Krishna Nagar;Delhi;Radhey Shyam Park Extension;Gandhi Nagar;Krishna Nagar",
 		actual.Address.String(),
 		"Address mismatch",
 	)

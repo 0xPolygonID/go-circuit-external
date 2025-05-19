@@ -254,16 +254,18 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 
 // AnonAadhaarV1PubSignals public inputs.
 type AnonAadhaarV1PubSignals struct {
-	PubKeyHash     string
-	Nullifier      string
-	HashIndex      string
-	HashValue      string
-	IssuanceDate   string
-	ExpirationDate string
-	NullifierSeed  int
-	SignalHash     int
-	TemplateRoot   string
-	IssuerDIDHash  string
+	PubKeyHash      string
+	Nullifier       string
+	HashIndex       string
+	HashValue       string
+	IssuanceDate    string
+	ExpirationDate  string
+	QrVersion       int
+	NullifierSeed   int
+	SignalHash      int
+	TemplateRoot    string
+	IssuerDIDHash   string
+	RevocationNonce int
 }
 
 // PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals.
@@ -275,12 +277,14 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// 3 - hashValue
 	// 4 - issuanceDate
 	// 5 - expirationDate
-	// 6 - nullifierSeed
-	// 7 - signalHash
-	// 8 - templateRoot
-	// 9 - issuerDIDHash
+	// 6 - qrVersion
+	// 7 - nullifierSeed
+	// 8 - signalHash
+	// 9 - templateRoot
+	// 10 - issuerDIDHash
+	// 11 - revocationNonce
 
-	const fieldLength = 10
+	const fieldLength = 12
 
 	var sVals []string
 	err := json.Unmarshal(data, &sVals)
@@ -298,16 +302,24 @@ func (a *AnonAadhaarV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	a.HashValue = sVals[3]
 	a.IssuanceDate = sVals[4]
 	a.ExpirationDate = sVals[5]
-	a.NullifierSeed, err = strconv.Atoi(sVals[6])
+	a.QrVersion, err = strconv.Atoi(sVals[6])
+	if err != nil {
+		return fmt.Errorf("failed to parse qrVersion: %w", err)
+	}
+	a.NullifierSeed, err = strconv.Atoi(sVals[7])
 	if err != nil {
 		return fmt.Errorf("failed to parse nullifierSeed: %w", err)
 	}
-	a.SignalHash, err = strconv.Atoi(sVals[7])
+	a.SignalHash, err = strconv.Atoi(sVals[8])
 	if err != nil {
 		return fmt.Errorf("failed to parse signalHash: %w", err)
 	}
-	a.TemplateRoot = sVals[8]
-	a.IssuerDIDHash = sVals[9]
+	a.TemplateRoot = sVals[9]
+	a.IssuerDIDHash = sVals[10]
+	a.RevocationNonce, err = strconv.Atoi(sVals[11])
+	if err != nil {
+		return fmt.Errorf("failed to parse revocationNonce: %w", err)
+	}
 
 	return nil
 }

@@ -79,7 +79,7 @@ type Address struct {
 }
 
 func (a *Address) String() string {
-	const delimiter = " "
+	const delimiter = ";"
 	return strings.Join([]string{
 		a.CareOf,
 		a.District,

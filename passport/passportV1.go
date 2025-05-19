@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/0xPolygonID/go-circuit-external/common"
@@ -261,25 +262,29 @@ func toIntsArray(b []byte) []int {
 
 // PassportV1PubSignals public inputs.
 type PassportV1PubSignals struct {
-	HashIndex    string `json:"hashIndex"`
-	HashValue    string `json:"hashValue"`
-	LinkID       string `json:"linkId"`
-	CurrentDate  string `json:"currentDate"`
-	IssuanceDate string `json:"issuanceDate"`
-	TemplateRoot string `json:"templateRoot"`
+	HashIndex       string `json:"hashIndex"`
+	HashValue       string `json:"hashValue"`
+	LinkID          string `json:"linkId"`
+	CurrentDate     string `json:"currentDate"`
+	IssuanceDate    string `json:"issuanceDate"`
+	TemplateRoot    string `json:"templateRoot"`
+	IssuerDIDHash   string `json:"issuerDIDHash"`
+	RevocationNonce int    `json:"revocationNonce"`
 }
 
 // PubSignalsUnmarshal unmarshal credentialAtomicQueryV3.circom public signals.
 func (a *PassportV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	// expected order:
-	// hashIndex - 1
-	// hashValue - 2
-	// linkId - 3
-	// currentDate - 4
-	// issuanceDate - 5
-	// templateRoot - 6
+	// hashIndex - 0
+	// hashValue - 1
+	// linkId - 2
+	// currentDate - 3
+	// issuanceDate - 4
+	// templateRoot - 5
+	// issuerDIDHash - 6
+	// revocationNonce - 7
 
-	const fieldLength = 6
+	const fieldLength = 8
 
 	var sVals []string
 	err := json.Unmarshal(data, &sVals)
@@ -297,6 +302,11 @@ func (a *PassportV1PubSignals) PubSignalsUnmarshal(data []byte) error {
 	a.CurrentDate = sVals[3]
 	a.IssuanceDate = sVals[4]
 	a.TemplateRoot = sVals[5]
+	a.IssuerDIDHash = sVals[6]
+	a.RevocationNonce, err = strconv.Atoi(sVals[7])
+	if err != nil {
+		return fmt.Errorf("failed to convert revocationNonce '%s' to int: %w", sVals[7], err)
+	}
 
 	return nil
 }
