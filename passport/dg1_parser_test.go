@@ -50,6 +50,20 @@ func TestParseDG1(t *testing.T) {
 				DateOfExpiry:   "350803",
 			},
 		},
+		{
+			name:  "Valid TD3 passport with hex data and group tag",
+			input: "PMUKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035<<<<<<<<<<<<<<02",
+			expected: &Passport{
+				DocumentType:   "PM",
+				IssuingCountry: "UKR",
+				DocumentNumber: "AC1234567",
+				HolderName:     "KUZNETSOV  VALERIY",
+				Nationality:    "UKR",
+				DateOfBirth:    "960309",
+				Sex:            Male,
+				DateOfExpiry:   "350803",
+			},
+		},
 	}
 
 	for _, tt := range tests {
