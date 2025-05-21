@@ -75,21 +75,23 @@ func ParseDG1(data string) (*Passport, error) {
 		sexValue = Other
 	}
 
+	// TD3 page 53
+	// https://www.icao.int/publications/Documents/9303_p10_cons_en.pdf
 	passport := &Passport{
-		DocumentType:       trimPlaceholder(line1[:1]),
-		IssuingCountry:     trimPlaceholder(line1[2:5]),
-		HolderName:         parseHolderName(line1[5:44]),
-		DocumentNumber:     trimPlaceholder(line2[:9]),
-		CheckDigitNumber:   trimPlaceholder(line2[9:10]),
-		Nationality:        trimPlaceholder(line2[10:13]),
-		DateOfBirth:        trimPlaceholder(line2[13:19]),
-		CheckDigitDOB:      trimPlaceholder(line2[19:20]),
-		Sex:                sexValue,
-		DateOfExpiry:       trimPlaceholder(line2[21:27]),
-		CheckDigitExpiry:   trimPlaceholder(line2[27:28]),
-		PersonalNumber:     strings.TrimSpace(line2[28:42]),
-		CheckDigitPersonal: trimPlaceholder(line2[42:43]),
-		CheckDigitFinal:    trimPlaceholder(line2[43:44]),
+		DocumentType:       trimPlaceholder(line1[:2]),      // 2 bytes
+		IssuingCountry:     trimPlaceholder(line1[2:5]),     // 3 bytes
+		HolderName:         parseHolderName(line1[5:44]),    // 39 bytes
+		DocumentNumber:     trimPlaceholder(line2[:9]),      // 9 bytes
+		CheckDigitNumber:   trimPlaceholder(line2[9:10]),    // 1 byte
+		Nationality:        trimPlaceholder(line2[10:13]),   // 3 bytes
+		DateOfBirth:        trimPlaceholder(line2[13:19]),   // 6 bytes
+		CheckDigitDOB:      trimPlaceholder(line2[19:20]),   // 1 byte
+		Sex:                sexValue,                        // 1 byte
+		DateOfExpiry:       trimPlaceholder(line2[21:27]),   // 6 bytes
+		CheckDigitExpiry:   trimPlaceholder(line2[27:28]),   // 1 byte
+		PersonalNumber:     strings.TrimSpace(line2[28:42]), // 14 bytes
+		CheckDigitPersonal: trimPlaceholder(line2[42:43]),   // 1 byte
+		CheckDigitFinal:    trimPlaceholder(line2[43:44]),   // 1 byte
 		Raw:                dg1Raw,
 	}
 
