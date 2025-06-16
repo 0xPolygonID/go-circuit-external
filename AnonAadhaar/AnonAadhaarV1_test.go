@@ -196,7 +196,9 @@ Q5I3LVZhZ3abc1uhLKNYD5GcG9i6cMTCqwrPKwm8L66YHzwClabh6fJI9QBzCU/6
 -----END PUBLIC KEY-----`,
 		NullifierSeed: 12345678,
 		SignalHash:    1001,
-		TimeNow:       time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC).Unix(), // Set a future time to simulate an expired credential
+		TimeNow: time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC).
+			Unix(),
+		// Set a future time to simulate an expired credential
 	}
 
 	_, err := inputs.InputsMarshal()
