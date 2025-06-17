@@ -175,3 +175,32 @@ Q5I3LVZhZ3abc1uhLKNYD5GcG9i6cMTCqwrPKwm8L66YHzwClabh6fJI9QBzCU/6
 	require.NoError(t, err)
 	require.JSONEq(t, expectedCredential, string(w3cCredeJSON))
 }
+
+func TestAnonAadhaarInputsMarshalV1_Expired(t *testing.T) {
+	bi, ok := big.NewInt(0).SetString(testdata, 10)
+	require.True(t, ok)
+	inputs := AnonAadhaarV1Inputs{
+		QRData:                          bi,
+		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
+		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
+		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
+		CredentialStatusID:              "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L/credentialStatus?revocationNonce=1051565438&contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2",
+		PubKey: `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlegfdQZZXMJirdz93TXY
+BAVbKt9G3HGcVrWO7hmZle+hoyVHEGIKx4Ael29E475FTbDxkOP31ONZiXIRc0Te
+Uvz3gm+ElIipWaez0h623QNFFmLqiD7u796ImhSZuaR/lQTF8JbCYrltI9GXUDMt
+npfrYUHSYd6XmU1MQWPKnL4+B3IhtEJT3PgWCUKLaDUe4+m2DSs1H9qm7owoqEUj
+n5fefMD+XRROR0gT+0PsWD+BtO4yjCIWczSJjSELoBeibsaJQPBd8ivZzIa7w6Q1
+Q5I3LVZhZ3abc1uhLKNYD5GcG9i6cMTCqwrPKwm8L66YHzwClabh6fJI9QBzCU/6
+8QIDAQAB
+-----END PUBLIC KEY-----`,
+		NullifierSeed: 12345678,
+		SignalHash:    1001,
+		TimeNow: time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC).
+			Unix(),
+		// Set a future time to simulate an expired credential
+	}
+
+	_, err := inputs.InputsMarshal()
+	require.ErrorContains(t, err, "is before current time")
+}

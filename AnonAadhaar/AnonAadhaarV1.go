@@ -61,6 +61,7 @@ type AnonAadhaarV1Inputs struct {
 	PubKey        string `json:"pubKey"`        // pubKey
 	NullifierSeed int    `json:"nullifierSeed"` // nullifierSeed
 	SignalHash    int    `json:"signalHash"`    // signalHash
+	TimeNow       int64  `json:"timeNow"`       // current time in seconds since epoch
 }
 
 type anonAadhaarV1CircuitInputs struct {
@@ -187,6 +188,12 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		return nil, fmt.Errorf("failed to convert did to id: %w", err)
 	}
 
+	doe := calculateDOE(ah.SignedTime)
+	timeNowClient := time.Unix(a.TimeNow, 0)
+	if doe.Before(timeNowClient) {
+		return nil, fmt.Errorf("expiration date %s is before current time %s", doe, timeNowClient)
+	}
+
 	siblings, err := tmpl.Update(ctx, []template.Node{
 		{
 			basicPerson.DateOfBirth,
@@ -202,7 +209,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		{basicPerson.CredentialSubjectID, credentialSubjetID},
 		{
 			basicPerson.ExpirationDate,
-			common.TimeToUnixNano(calculateDOE(ah.SignedTime)),
+			common.TimeToUnixNano(doe),
 		},
 		{basicPerson.IssuanceDate, common.TimeToUnixNano(ah.SignedTime)},
 		{basicPerson.Issuer, issuer},
