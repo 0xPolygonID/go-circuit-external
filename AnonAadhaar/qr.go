@@ -156,14 +156,14 @@ func (a *AnonAadhaarDataV2) verify() error {
 func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	r, err := createDecompressor(data.Bytes())
 	if err != nil {
-		return fmt.Errorf("%w: failed to create zlib/gzip reader: %v",
+		return fmt.Errorf("%w: failed to create zlib/gzip reader: %w",
 			ErrInvalidQRData, err)
 	}
 	//nolint:errcheck // Ignore close error
 	defer r.Close()
 	uncompressedData, err := io.ReadAll(r)
 	if err != nil {
-		return fmt.Errorf("%w: failed to read compressed data: %s",
+		return fmt.Errorf("%w: failed to read compressed data: %w",
 			ErrInvalidQRData, err)
 	}
 
@@ -193,7 +193,7 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	dob, err := time.Parse(mm_dd_yyyy_template, string(partsWithoutPhoto[4]))
 	if err != nil {
 		return fmt.Errorf(
-			"%w: failed to parse date of birth '%s': %v",
+			"%w: failed to parse date of birth '%s': %w",
 			ErrInvalidQRVersion,
 			string(partsWithoutPhoto[4]),
 			err,
@@ -210,7 +210,7 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	) // format: YYYYMMDDHH (24 hours representation)
 	if err != nil {
 		return fmt.Errorf(
-			"%w: failed to parse signed time '%s': %v",
+			"%w: failed to parse signed time '%s': %w",
 			ErrInvalidQRVersion,
 			string(partsWithoutPhoto[2][4:14]),
 			err)
@@ -249,7 +249,7 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 
 	if err = a.verify(); err != nil {
 		return fmt.Errorf(
-			"%w: failed to verify Aadhaar QR: %v",
+			"%w: failed to verify Aadhaar QR: %w",
 			ErrInvalidQRVersion, err)
 	}
 
