@@ -13,6 +13,13 @@ import (
 	"time"
 )
 
+var (
+	// ErrInvalidQRVersion is returned when the QR version is invalid.
+	ErrInvalidQRVersion = errors.New("invalid QR version")
+	// ErrInvalidQRData is returned when invalid Aadhaar QR data is provided.
+	ErrInvalidQRData = errors.New("invalid QR data")
+)
+
 type GenderString string
 
 const (
@@ -149,23 +156,36 @@ func (a *AnonAadhaarDataV2) verify() error {
 func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	r, err := createDecompressor(data.Bytes())
 	if err != nil {
-		return fmt.Errorf("failed to create zlib/gzip reader: %w", err)
+		return fmt.Errorf("%w: failed to create zlib/gzip reader: %w",
+			ErrInvalidQRData, err)
 	}
 	//nolint:errcheck // Ignore close error
 	defer r.Close()
 	uncompressedData, err := io.ReadAll(r)
 	if err != nil {
-		return fmt.Errorf("failed to read compressed data: %w", err)
+		return fmt.Errorf("%w: failed to read compressed data: %w",
+			ErrInvalidQRData, err)
 	}
 
-	a.signature = uncompressedData[len(uncompressedData)-256:]
+	const signatureLength = 256
+	if len(uncompressedData) < signatureLength {
+		return fmt.Errorf("%w: uncompressed data too short: %d",
+			ErrInvalidQRData, len(uncompressedData))
+	}
+
+	a.signature = uncompressedData[len(uncompressedData)-signatureLength:]
 
 	// remove signature
-	d := uncompressedData[:len(uncompressedData)-256]
+	d := uncompressedData[:len(uncompressedData)-signatureLength]
 	a.rawdata = d
 
 	// remove photo part
 	parts := bytes.Split(d, []byte{delimiter})
+	if len(parts) < 19 {
+		return fmt.Errorf("%w: invalid number of data fields: %d",
+			ErrInvalidQRData, len(parts))
+	}
+
 	partsWithoutPhoto := parts[:18]
 	photo := parts[18:]
 
@@ -173,7 +193,8 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	dob, err := time.Parse(mm_dd_yyyy_template, string(partsWithoutPhoto[4]))
 	if err != nil {
 		return fmt.Errorf(
-			"failed to parse date of birth '%s': %w",
+			"%w: failed to parse date of birth '%s': %w",
+			ErrInvalidQRVersion,
 			string(partsWithoutPhoto[4]),
 			err,
 		)
@@ -188,8 +209,11 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 		string(partsWithoutPhoto[2][4:14]),
 	) // format: YYYYMMDDHH (24 hours representation)
 	if err != nil {
-		return fmt.Errorf("failed to parse signed time '%s': %w",
-			string(partsWithoutPhoto[2][4:14]), err)
+		return fmt.Errorf(
+			"%w: failed to parse signed time '%s': %w",
+			ErrInvalidQRVersion,
+			string(partsWithoutPhoto[2][4:14]),
+			err)
 	}
 	a.SignedTime = sigtime.Add(-istOffset * time.Second)
 	a.Name = string(partsWithoutPhoto[3])
@@ -224,7 +248,9 @@ func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	}
 
 	if err = a.verify(); err != nil {
-		return fmt.Errorf("failed to unmarshal from QR: %w", err)
+		return fmt.Errorf(
+			"%w: failed to verify Aadhaar QR: %w",
+			ErrInvalidQRVersion, err)
 	}
 
 	return nil
