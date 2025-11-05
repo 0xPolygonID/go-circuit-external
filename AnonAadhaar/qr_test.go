@@ -105,7 +105,7 @@ func TestQRCode_Error(t *testing.T) {
 			errorDescription: "failed to create zlib/gzip reader",
 		},
 		{
-			name:             "InvaldQRData",
+			name:             "InvalidQRData",
 			input:            "850400046232713924999233579253012674317057313623715898524149001289727",
 			expectedErr:      ErrInvalidQRData,
 			errorDescription: "failed to read compressed data",

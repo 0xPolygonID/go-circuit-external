@@ -16,7 +16,7 @@ import (
 var (
 	// ErrInvalidQRVersion is returned when the QR version is invalid.
 	ErrInvalidQRVersion = errors.New("invalid QR version")
-	// ErrInvalidQRData is returned when the not Aadhaar QR data is provided.
+	// ErrInvalidQRData is returned when invalid Aadhaar QR data is provided.
 	ErrInvalidQRData = errors.New("invalid QR data")
 )
 
