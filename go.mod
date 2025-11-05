@@ -10,7 +10,7 @@ require (
 	github.com/iden3/go-iden3-core/v2 v2.3.2
 	github.com/iden3/go-merkletree-sql/v2 v2.0.6
 	github.com/iden3/go-schema-processor/v2 v2.6.5
-	github.com/lestrrat-go/jwx/v3 v3.0.12
+	github.com/lestrrat-go/jwx/v3 v3.0.10
 	github.com/stretchr/testify v1.11.1
 )
 
