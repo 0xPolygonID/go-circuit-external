@@ -38,6 +38,9 @@ type Passport struct {
 	Raw                []byte // Raw data including group tag
 }
 
+// ErrInvalidDG1Format indicates that the DG1 data format is invalid.
+var ErrInvalidDG1Format = errors.New("invalid DG1 format")
+
 // ParseDG1 parses the provided DG1 data and returns a Passport struct.
 func ParseDG1(data string) (*Passport, error) {
 	dg1Raw, err := hex.DecodeString(data)
@@ -45,11 +48,8 @@ func ParseDG1(data string) (*Passport, error) {
 		return nil, fmt.Errorf("failed to decode DG1 data from hex: %w", err)
 	}
 
-	//nolint:gocritic // We need len from UTF8 string
-	dg1RawLen := len(string(dg1Raw))
-
 	// compare length with tag
-	switch dg1RawLen {
+	switch len(dg1Raw) {
 	case 95:
 		return ParseTD1(dg1Raw)
 	case 93:
@@ -57,8 +57,8 @@ func ParseDG1(data string) (*Passport, error) {
 	}
 
 	return nil, fmt.Errorf(
-		"invalid DG1 format: data should be either 95 (TD1) or 93 (TD3) characters long: %d",
-		dg1RawLen)
+		"%w: data should be either 95 (TD1) or 93 (TD3) characters long: %d",
+		ErrInvalidDG1Format, len(dg1Raw))
 }
 
 // ParseTD1 parses the provided DG1 data in TD1 format and returns a Passport struct.
@@ -110,8 +110,6 @@ func ParseTD1(data []byte) (*Passport, error) {
 	default:
 		sexValue = Other
 	}
-
-	// Combine optional data fields
 
 	passport := &Passport{
 		DocumentType:       documentType,

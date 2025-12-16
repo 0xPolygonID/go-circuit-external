@@ -1,6 +1,7 @@
 package passport
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ func mrzToDg1_TD1(mrz string) []byte {
 	return b
 }
 
-func TestParseDG1(t *testing.T) {
+func TestParseTD3(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -100,7 +101,7 @@ func TestParseDG1(t *testing.T) {
 	}
 }
 
-func TestParseDG1_TD1(t *testing.T) {
+func TestParseTD1(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       string
@@ -144,7 +145,7 @@ func TestParseDG1_TD1(t *testing.T) {
 			},
 		},
 		{
-			name:  "Valid TD1 document - Shord document number",
+			name:  "Valid TD1 document - Short document number",
 			input: "IDUKRAC12345<<1<<<<<<<<<<<<<<<9603092M3508033UKR<<<<<<<<<<<4KUZNETSOV<<VALERIY<<<<<<<<<<<<",
 			expected: &Passport{
 				DocumentType:     "ID",
@@ -339,6 +340,84 @@ func TestParseDG1_TD1(t *testing.T) {
 
 			// Verify raw data is present
 			require.NotEmpty(t, result.Raw, "Raw data should not be empty")
+		})
+	}
+}
+
+func TestParseDG1(t *testing.T) {
+	tests := []struct {
+		name string
+		dg1  string
+	}{
+		{
+			name: "TD1 format",
+			dg1: hex.EncodeToString(
+				mrzToDg1_TD1(
+					"IDUKRAC12345671<<<<<<<<<<<<<<<9603091M3508031UKR<<<<<<<<<<<1KUZNETSOV<<VALERIY<<<<<<<<<<<<",
+				),
+			),
+		},
+		{
+			name: "TD3 format",
+			dg1: hex.EncodeToString(
+				mrzToDg1_TD3(
+					"P<UKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035<<<<<<<<<<<<<<02",
+				),
+			),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseDG1(tt.dg1)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestParseDG1_Error(t *testing.T) {
+	tests := []struct {
+		name string
+		dg1  string
+	}{
+		{
+			name: "TD1 format extra long",
+			dg1: hex.EncodeToString(
+				mrzToDg1_TD1(
+					"IDUKRAC12345671<<<<<<<<<<<<<<<9603091M3508031UKR<<<<<<<<<<<1KUZNETSOV<<VALERIY<<<<<<<<<<<<EXTRA",
+				),
+			),
+		},
+		{
+			name: "TD3 format",
+			dg1: hex.EncodeToString(
+				mrzToDg1_TD3(
+					"P<UKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035<<<<<<<<<<<<<<02EXTRA",
+				),
+			),
+		},
+		{
+			name: "TD1 to short",
+			dg1: hex.EncodeToString(
+				mrzToDg1_TD1(
+					"IDUKRAC12345671<<<<<<<<<<<<<<<9603091M3508031UKR<<<<<<<<<<<1KUZNETSOV<<VALERIY",
+				),
+			),
+		},
+		{
+			name: "TD3 invalid format",
+			dg1: hex.EncodeToString(
+				mrzToDg1_TD3(
+					"P<UKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035",
+				),
+			),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseDG1(tt.dg1)
+			require.ErrorIs(t, err, ErrInvalidDG1Format)
 		})
 	}
 }
