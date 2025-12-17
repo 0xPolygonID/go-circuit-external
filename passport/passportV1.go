@@ -29,15 +29,14 @@ const (
 	//nolint:gosec // This is names of algorithms
 	CredentialSHA512 = "credential_sha512"
 
-	//nolint:gosec // This is names of algorithms
 	IDcardSHA1 = "idcard_sha1"
-	//nolint:gosec // This is names of algorithms
+
 	IDcardSHA224 = "idcard_sha224"
-	//nolint:gosec // This is names of algorithms
+
 	IDcardSHA256 = "idcard_sha256"
-	//nolint:gosec // This is names of algorithms
+
 	IDcardSHA384 = "idcard_sha384"
-	//nolint:gosec // This is names of algorithms
+
 	IDcardSHA512 = "idcard_sha512"
 )
 
