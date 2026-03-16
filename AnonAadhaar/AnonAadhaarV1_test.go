@@ -204,7 +204,7 @@ Q5I3LVZhZ3abc1uhLKNYD5GcG9i6cMTCqwrPKwm8L66YHzwClabh6fJI9QBzCU/6
 	require.ErrorContains(t, err, "is before current time")
 }
 
-func TestAnonAadhaarInputMarshalV1_WrongPublicKey(t *testing.T) {
+func TestAnonAadhaarInputsMarshalV1_WrongPublicKey(t *testing.T) {
 	qrDataBI, ok := big.NewInt(0).SetString(testDataLatest, 10)
 	require.True(t, ok)
 	inputs := &AnonAadhaarV1Inputs{
