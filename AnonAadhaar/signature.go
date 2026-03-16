@@ -10,13 +10,11 @@ import (
 	"fmt"
 )
 
-var (
-	ErrInvalidPublicKey = errors.New("invalid public key")
-)
+var ErrInvalidSignature = errors.New("invalid public key")
 
 // verifySignature checks whether the given data was signed with the RSA private key
 // corresponding to the provided PEM-encoded public key, using RSA PKCS#1 v1.5 with SHA-256.
-func verifySignature(data []byte, signature []byte, keyPem string) error {
+func verifySignature(data, signature []byte, keyPem string) error {
 	block, _ := pem.Decode([]byte(keyPem))
 	if block == nil {
 		return fmt.Errorf("failed to decode PEM block")
@@ -35,7 +33,7 @@ func verifySignature(data []byte, signature []byte, keyPem string) error {
 	digest := sha256.Sum256(data)
 	err = rsa.VerifyPKCS1v15(rsaPub, crypto.SHA256, digest[:], signature)
 	if err != nil {
-		return fmt.Errorf("signature verification failed: %w", ErrInvalidPublicKey)
+		return fmt.Errorf("%w: %w", ErrInvalidSignature, err)
 	}
 	return nil
 }

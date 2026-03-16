@@ -3,7 +3,6 @@ package anonaadhaar
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -44,8 +43,6 @@ var (
 	}
 
 	countryOfIssuance = "IND" // iso3166 country code for India
-
-	ErrAadhaarWrongPublicKey = errors.New("Aadhaar was signed with another key. Recreate Aadhaar QR code")
 )
 
 func calculateDOE(issuanceDate time.Time) time.Time {
@@ -92,10 +89,7 @@ func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error)
 		return nil, fmt.Errorf("failed to unmarshal QRData: %w", err)
 	}
 
-	err = verifySignature(QR.rawdata, QR.signature, a.PubKey)
-	if err != nil && errors.Is(err, ErrInvalidPublicKey) {
-		return nil, ErrAadhaarWrongPublicKey
-	} else if err != nil {
+	if err = verifySignature(QR.rawdata, QR.signature, a.PubKey); err != nil {
 		return nil, fmt.Errorf("failed to verify signature: %w", err)
 	}
 
@@ -158,9 +152,7 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 		return nil, fmt.Errorf("failed to unmarshal QRData: %w", err)
 	}
 	err = verifySignature(ah.rawdata, ah.signature, a.PubKey)
-	if err != nil && errors.Is(err, ErrInvalidPublicKey) {
-		return nil, ErrAadhaarWrongPublicKey
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("failed to verify signature: %w", err)
 	}
 
