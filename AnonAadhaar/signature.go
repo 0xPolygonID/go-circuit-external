@@ -10,7 +10,7 @@ import (
 	"fmt"
 )
 
-var ErrInvalidSignature = errors.New("invalid public key")
+var ErrInvalidSignature = errors.New("invalid signature")
 
 // verifySignature checks whether the given data was signed with the RSA private key
 // corresponding to the provided PEM-encoded public key, using RSA PKCS#1 v1.5 with SHA-256.
