@@ -84,13 +84,9 @@ type anonAadhaarV1CircuitInputs struct {
 
 func (a *AnonAadhaarV1Inputs) W3CCredential() (*verifiable.W3CCredential, error) {
 	QR := &AnonAadhaarDataV2{}
-	err := QR.UnmarshalQR(a.QRData)
+	err := QR.UnmarshalQRWithOpts(a.QRData, WithPublicKey(a.PubKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal QRData: %w", err)
-	}
-
-	if err = verifySignature(QR.rawdata, QR.signature, a.PubKey); err != nil {
-		return nil, fmt.Errorf("failed to verify signature: %w", err)
 	}
 
 	credentialSubject := map[string]interface{}{
@@ -147,13 +143,9 @@ func (a *AnonAadhaarV1Inputs) InputsMarshal() ([]byte, error) {
 	templateRoot := tmpl.Root()
 
 	ah := &AnonAadhaarDataV2{}
-	err = ah.UnmarshalQR(a.QRData)
+	err = ah.UnmarshalQRWithOpts(a.QRData, WithPublicKey(a.PubKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal QRData: %w", err)
-	}
-	err = verifySignature(ah.rawdata, ah.signature, a.PubKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to verify signature: %w", err)
 	}
 
 	// List of values to hash

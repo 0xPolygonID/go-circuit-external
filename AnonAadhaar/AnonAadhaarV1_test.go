@@ -206,7 +206,7 @@ Q5I3LVZhZ3abc1uhLKNYD5GcG9i6cMTCqwrPKwm8L66YHzwClabh6fJI9QBzCU/6
 	require.ErrorContains(t, err, "is before current time")
 }
 
-func TestAnonAadhaarInputsMarshalV1_WrongSignature(t *testing.T) {
+func TestAnonAadhaar_WrongSignature(t *testing.T) {
 	qrDataBI, ok := big.NewInt(0).SetString(testDataLatest, 10)
 	require.True(t, ok)
 	inputs := &AnonAadhaarV1Inputs{
@@ -221,5 +221,8 @@ func TestAnonAadhaarInputsMarshalV1_WrongSignature(t *testing.T) {
 	}
 
 	_, err := inputs.InputsMarshal()
+	require.ErrorIs(t, err, ErrInvalidSignature)
+
+	_, err = inputs.W3CCredential()
 	require.ErrorIs(t, err, ErrInvalidSignature)
 }
