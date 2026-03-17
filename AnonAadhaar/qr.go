@@ -190,7 +190,7 @@ func (a *AnonAadhaarDataV2) UnmarshalQRWithOpts(data *big.Int, opts ...Unmarshal
 	return nil
 }
 
-// deprecated: use UnmarshalQRWithOpts instead
+// Deprecated: use UnmarshalQRWithOpts instead.
 func (a *AnonAadhaarDataV2) UnmarshalQR(data *big.Int) error {
 	r, err := createDecompressor(data.Bytes())
 	if err != nil {
