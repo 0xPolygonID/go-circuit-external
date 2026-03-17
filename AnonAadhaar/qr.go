@@ -155,18 +155,19 @@ func (a *AnonAadhaarDataV2) verify() error {
 
 // UnmarshalQROpts options.
 type UnmarshalQROpts struct {
-	pubkey string
+	Pubkey string
 }
 
 // UnmarshalQROpt is a function that modifies UnmarshalQROpts.
-type UnmarshalQROpt func(*UnmarshalQROpts)
+type UnmarshalQROpt func(*UnmarshalQROpts) error
 
 // WithPublicKey sets the public key for signature verification.
 // Without the optional public key, UnmarshalQRWithOpts
 // will only unmarshal the QR data without verifying the signature.
-func WithPublicKey(pubkey string) func(*UnmarshalQROpts) {
-	return func(opts *UnmarshalQROpts) {
-		opts.pubkey = pubkey
+func WithPublicKey(pubkey string) UnmarshalQROpt {
+	return func(opts *UnmarshalQROpts) error {
+		opts.Pubkey = pubkey
+		return nil
 	}
 }
 
@@ -174,15 +175,20 @@ func WithPublicKey(pubkey string) func(*UnmarshalQROpts) {
 func (a *AnonAadhaarDataV2) UnmarshalQRWithOpts(data *big.Int, opts ...UnmarshalQROpt) error {
 	var options UnmarshalQROpts
 	for _, opt := range opts {
-		opt(&options)
+		if opt == nil {
+			continue
+		}
+		if err := opt(&options); err != nil {
+			return fmt.Errorf("failed to apply option: %w", err)
+		}
 	}
 
 	if err := a.UnmarshalQR(data); err != nil {
 		return err
 	}
 
-	if options.pubkey != "" {
-		if err := verifySignature(a.rawdata, a.signature, options.pubkey); err != nil {
+	if options.Pubkey != "" {
+		if err := verifySignature(a.rawdata, a.signature, options.Pubkey); err != nil {
 			return fmt.Errorf("failed to verify signature: %w", err)
 		}
 	}
