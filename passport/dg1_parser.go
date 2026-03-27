@@ -38,13 +38,102 @@ type Passport struct {
 	Raw                []byte // Raw data including group tag
 }
 
+// ErrInvalidDG1Format indicates that the DG1 data format is invalid.
+var ErrInvalidDG1Format = errors.New("invalid DG1 format")
+
 // ParseDG1 parses the provided DG1 data and returns a Passport struct.
 func ParseDG1(data string) (*Passport, error) {
 	dg1Raw, err := hex.DecodeString(data)
 	if err != nil {
-		return nil, fmt.Errorf("invalid TD3 format: data should be a hexadecimal string: %w", err)
+		return nil, fmt.Errorf("failed to decode DG1 data from hex: %w", err)
 	}
-	dg1RawWithoutTag := dg1Raw[dg1TagSize:]
+
+	// compare length with tag
+	switch len(dg1Raw) {
+	case 95:
+		return ParseTD1(dg1Raw)
+	case 93:
+		return ParseTD3(dg1Raw)
+	}
+
+	return nil, fmt.Errorf(
+		"%w: data should be either 95 (TD1) or 93 (TD3) characters long: %d",
+		ErrInvalidDG1Format, len(dg1Raw))
+}
+
+// ParseTD1 parses the provided DG1 data in TD1 format and returns a Passport struct.
+// TD1 format consists of 3 lines of 30 characters each (total 90 characters).
+func ParseTD1(data []byte) (*Passport, error) {
+	dg1RawWithoutTag := data[dg1TagSize:]
+
+	dg1 := string(dg1RawWithoutTag)
+	if len(dg1) != 90 {
+		return nil, fmt.Errorf(
+			"invalid TD1 format: data should be 90 characters long: %d",
+			len(dg1),
+		)
+	}
+
+	line1 := dg1[:30]
+	line2 := dg1[30:60]
+	line3 := dg1[60:90]
+
+	// Parse Line 1: Document code (2), Issuing state (3), Document number (9),
+	// Check digit (1), Optional data (15)
+	documentType := trimPlaceholder(line1[:2])
+	issuingCountry := trimPlaceholder(line1[2:5])
+	documentNumber := trimPlaceholder(line1[5:14])
+	checkDigitNumber := trimPlaceholder(line1[14:15])
+
+	// Parse Line 2: Date of birth (6), Check digit (1), Sex (1), Date of expiry (6),
+	// Check digit (1), Nationality (3), Optional data (11), Composite check digit (1)
+	dateOfBirth := trimPlaceholder(line2[:6])
+	checkDigitDOB := trimPlaceholder(line2[6:7])
+	sexChar := line2[7:8]
+	dateOfExpiry := trimPlaceholder(line2[8:14])
+	checkDigitExpiry := trimPlaceholder(line2[14:15])
+	nationality := trimPlaceholder(line2[15:18])
+	checkDigitFinal := trimPlaceholder(line2[29:30])
+
+	// Parse Line 3: Name of holder (30)
+	holderName := parseHolderName(line3)
+
+	// Determine the sex value
+	var sexValue Sex
+	switch sexChar {
+	case "M":
+		sexValue = Male
+	case "F":
+		sexValue = Female
+	case "X":
+		sexValue = Other
+	default:
+		sexValue = Other
+	}
+
+	passport := &Passport{
+		DocumentType:       documentType,
+		IssuingCountry:     issuingCountry,
+		DocumentNumber:     documentNumber,
+		HolderName:         holderName,
+		Nationality:        nationality,
+		DateOfBirth:        dateOfBirth,
+		Sex:                sexValue,
+		DateOfExpiry:       dateOfExpiry,
+		PersonalNumber:     "",
+		CheckDigitNumber:   checkDigitNumber,
+		CheckDigitDOB:      checkDigitDOB,
+		CheckDigitExpiry:   checkDigitExpiry,
+		CheckDigitPersonal: "", // TD1 doesn't have a separate personal number check digit
+		CheckDigitFinal:    checkDigitFinal,
+		Raw:                data,
+	}
+
+	return passport, nil
+}
+
+func ParseTD3(data []byte) (*Passport, error) {
+	dg1RawWithoutTag := data[dg1TagSize:]
 
 	dg1 := string(dg1RawWithoutTag)
 	if len(dg1) != 88 {
@@ -92,7 +181,7 @@ func ParseDG1(data string) (*Passport, error) {
 		PersonalNumber:     strings.TrimSpace(line2[28:42]), // 14 bytes
 		CheckDigitPersonal: trimPlaceholder(line2[42:43]),   // 1 byte
 		CheckDigitFinal:    trimPlaceholder(line2[43:44]),   // 1 byte
-		Raw:                dg1Raw,
+		Raw:                data,
 	}
 
 	return passport, nil

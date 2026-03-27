@@ -1,6 +1,7 @@
 package passport
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"testing"
@@ -9,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestW3CCredential(t *testing.T) {
+func TestW3CCredential_TD3(t *testing.T) {
 	expectedCredential := `{
   "@context": [
     "https://www.w3.org/2018/credentials/v1",
@@ -52,9 +53,9 @@ func TestW3CCredential(t *testing.T) {
 	require.NoError(t, err)
 
 	inputs := PassportV1Inputs{
-		PassportData: mrzToDg1(
+		PassportData: hex.EncodeToString(mrzToDg1_TD3(
 			"P<UKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035<<<<<<<<<<<<<<02",
-		),
+		)),
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
@@ -72,14 +73,14 @@ func TestW3CCredential(t *testing.T) {
 	require.JSONEq(t, expectedCredential, string(actualCredential))
 }
 
-func TestInputsMarshal(t *testing.T) {
+func TestInputsMarshal_TD3(t *testing.T) {
 	issuanceDate, err := time.Parse(time.RFC3339Nano, "2025-03-21T17:28:52.201289Z")
 	require.NoError(t, err)
 
 	inputs := PassportV1Inputs{
-		PassportData: mrzToDg1(
+		PassportData: hex.EncodeToString(mrzToDg1_TD3(
 			"P<UKRKUZNETSOV<<VALERIY<<<<<<<<<<<<<<<<<<<<<AC12345674UKR9603091M3508035<<<<<<<<<<<<<<02",
-		),
+		)),
 		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
 		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
 		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
@@ -90,8 +91,95 @@ func TestInputsMarshal(t *testing.T) {
 
 	inputsCircuit, err := inputs.InputsMarshal()
 	require.NoError(t, err)
-	expectedInputs, err := os.ReadFile("./testdata/inputs.json")
+	expectedInputs, err := os.ReadFile("./testdata/inputs_td3.json")
 	require.NoError(t, err)
+	require.JSONEq(t, string(expectedInputs), string(inputsCircuit))
+}
+
+func TestW3CCredential_TD1(t *testing.T) {
+	expectedCredential := `{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://schema.iden3.io/core/jsonld/iden3proofs.jsonld",
+    "ipfs://QmZbsTnRwtCmbdg3r9o7Txid37LmvPcvmzVi1Abvqu1WKL"
+  ],
+  "type": [
+    "VerifiableCredential",
+    "BasicPerson"
+  ],
+  "expirationDate": "2026-03-21T17:28:52Z",
+  "issuanceDate": "2025-03-21T17:28:52Z",
+  "credentialSubject": {
+    "dateOfBirth": 19960309,
+    "documentExpirationDate": 20350803,
+    "fullName": "KUZNETSOV  VALERIY",
+    "governmentIdentifier": "AC1234567",
+    "governmentIdentifierType": "ID",
+    "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
+    "nationalities": {
+      "nationality1CountryCode": "UKR",
+      "nationality2CountryCode": "UKR"
+    },
+    "sex": "M",
+    "type": "BasicPerson"
+  },
+  "credentialStatus": {
+    "id": "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2\u0026state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+    "type": "Iden3OnchainSparseMerkleTreeProof2023",
+    "revocationNonce": 1257894000
+  },
+  "issuer": "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
+  "credentialSchema": {
+    "id": "ipfs://QmTojMfyzxehCJVw7aUrdWuxdF68R7oLYooGHCUr9wwsef",
+    "type": "JsonSchema2023"
+  }
+}`
+
+	issuanceDate, err := time.Parse(time.RFC3339Nano, "2025-03-21T17:28:52.201289Z")
+	require.NoError(t, err)
+
+	inputs := PassportV1Inputs{
+		PassportData: hex.EncodeToString(mrzToDg1_TD1(
+			"IDUKRAC12345671<<<<<<<<<<<<<<<9603092M3508033UKR<<<<<<<<<<<4KUZNETSOV<<VALERIY<<<<<<<<<<<<",
+		)),
+		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
+		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
+		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
+		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+		IssuanceDate:                    issuanceDate.UTC().Unix(),
+		LinkNonce:                       "1",
+	}
+
+	credential, err := inputs.W3CCredential()
+	require.NoError(t, err)
+	credential.ID = ""
+	actualCredential, err := json.Marshal(credential)
+	require.NoError(t, err)
+
+	require.JSONEq(t, expectedCredential, string(actualCredential))
+}
+
+func TestInputsMarshal_TD1(t *testing.T) {
+	issuanceDate, err := time.Parse(time.RFC3339Nano, "2025-03-21T17:28:52.201289Z")
+	require.NoError(t, err)
+
+	inputs := PassportV1Inputs{
+		PassportData: hex.EncodeToString(mrzToDg1_TD1(
+			"IDUKRAC12345671<<<<<<<<<<<<<<<9603091M3508031UKR<<<<<<<<<<<1KUZNETSOV<<VALERIY<<<<<<<<<<<<",
+		)),
+		IssuerID:                        "did:iden3:privado:main:2Si3eZUE6XetYsmU5dyUK2Cvaxr1EEe65vdv2BML4L",
+		CredentialSubjectID:             "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G",
+		CredentialStatusRevocationNonce: int(time.Unix(1257894000, 0).Unix()),
+		CredentialStatusID:              "did:iden3:privado:main:2Scn2RfosbkQDMQzQM5nCz3Nk5GnbzZCWzGCd3tc2G/credentialStatus?contractAddress=80001:0x2fCE183c7Fbc4EbB5DB3B0F5a63e0e02AE9a85d2&state=a1abdb9f44c7b649eb4d21b59ef34bd38e054aa3e500987575a14fc92c49f42c",
+		IssuanceDate:                    issuanceDate.UTC().Unix(),
+		LinkNonce:                       "1",
+	}
+
+	inputsCircuit, err := inputs.InputsMarshal()
+	require.NoError(t, err)
+	expectedInputs, err := os.ReadFile("./testdata/inputs_td1.json")
+	require.NoError(t, err)
+
 	require.JSONEq(t, string(expectedInputs), string(inputsCircuit))
 }
 

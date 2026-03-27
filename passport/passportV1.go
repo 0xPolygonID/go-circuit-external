@@ -28,6 +28,16 @@ const (
 	CredentialSHA384 = "credential_sha384"
 	//nolint:gosec // This is names of algorithms
 	CredentialSHA512 = "credential_sha512"
+
+	IDcardSHA1 = "idcard_sha1"
+
+	IDcardSHA224 = "idcard_sha224"
+
+	IDcardSHA256 = "idcard_sha256"
+
+	IDcardSHA384 = "idcard_sha384"
+
+	IDcardSHA512 = "idcard_sha512"
 )
 
 var (
